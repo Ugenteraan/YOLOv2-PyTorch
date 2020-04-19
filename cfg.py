@@ -1,4 +1,5 @@
 import glob
+from utils import get_classes
 
 data_images_path     = '../VOCdevkit/VOC2012/JPEGImages'
 data_annotation_path = '../VOCdevkit/VOC2012/Annotations'
@@ -14,4 +15,7 @@ list_images      = sorted([x for x in glob.glob(data_images_path + '/**')])     
 list_annotations = sorted([x for x in glob.glob(data_annotation_path + '/**')]) #length : 17125
 total_images = len(list_images)
 
+classes = get_classes(xml_files=list_annotations)
+num_of_class = len(classes)
+excluded_classes = [] #if you'd like to exclude certain classes for training.
 
