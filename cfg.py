@@ -1,3 +1,5 @@
+import glob
+
 data_images_path     = '../VOCdevkit/VOC2012/JPEGImages'
 data_annotation_path = '../VOCdevkit/VOC2012/Annotations'
 trained_model_path = './trained_model/'
@@ -11,3 +13,5 @@ subsampled_ratio = 32
 list_images      = sorted([x for x in glob.glob(data_images_path + '/**')])     #length : 17125
 list_annotations = sorted([x for x in glob.glob(data_annotation_path + '/**')]) #length : 17125
 total_images = len(list_images)
+
+
