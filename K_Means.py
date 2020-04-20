@@ -40,7 +40,7 @@ class K_Means:
 
     def iou(self, box, centroids):
         '''
-        Find the IoU for one box and all the centroids.
+        Find the IoU between one box and all the centroids.
         '''
         
         x = np.minimum(centroids[:, 0], box[0]) #get all the heights

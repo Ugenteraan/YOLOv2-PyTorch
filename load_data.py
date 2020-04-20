@@ -1,4 +1,5 @@
 import numpy as np 
+import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 import cfg
@@ -46,7 +47,11 @@ class Load_Dataset(Dataset):
         '''
         Abstract method. Returns the label for a single input with the index of `idx`.
         '''
-    
+        
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        
+        
         
 
     
