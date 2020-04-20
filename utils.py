@@ -2,6 +2,7 @@ import xmltodict
 import numpy as np
 from K_Means import K_Means
 from skimage import io, transform
+from label_format import label_formatting
 
 def get_classes(xml_files):
     '''
@@ -214,18 +215,21 @@ def read_image(image_path, resized_image_size):
 
 
 
-def generate_training_data(data_index, anchors_list, xml_file_path, classes, resized_image_size, excluded_classes, image_path):
+def generate_training_data(data_index, anchors_list, xml_file_path, classes, resized_image_size, subsampled_ratio, excluded_classes, image_path):
     '''
     Returns the image array and the corresponding label in the required format based for the given index.
     '''
 
     #get the label(s) and ground-truth bounding box(es) (x1,y1,x2,y2) for a given xml file path.
     object_labels, gt_boxes = get_labels_from_xml(xml_file_path=xml_file_path, resized_image_size=resized_image_size,
-                                                                                        excluded_classes=excluded_classes)
+                                                                        classes=classes, excluded_classes=excluded_classes)
     
+
     image_array = read_image(image_path=image_path, resized_image_size=resized_image_size)
 
-    # regression_objectness_array, class_label_array = 
+    #label formatting
+    regression_objectness_array, class_label_array = label_formatting(gt_class_labels=object_labels, gt_boxes=gt_boxes, anchors_list=anchors_list,
+                                                            subsampled_ratio=subsampled_ratio, resized_image_size=resized_image_size, classes=classes)
 
 
-    
+    return (image_array, regression_objectness_array, class_label_array)
