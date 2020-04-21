@@ -1,6 +1,6 @@
 import numpy as np 
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from torchvision import transforms, utils
 import cfg
 from utils import cluster_bounding_boxes, generate_anchors, generate_training_data

@@ -94,8 +94,8 @@ def label_formatting(gt_class_labels, gt_boxes, anchors_list, subsampled_ratio, 
         #transform the ground truth values to [x,y,w,h] (center coordinates, width and height)
         gt_box_height = gt_box_y2 - gt_box_y1
         gt_box_width  = gt_box_x2 - gt_box_x1
-        gt_center_x   = gt_box_x1 + (gt_box_width)/2
-        gt_center_y   = gt_box_y1 + (gt_box_height)/2
+        gt_center_x   = gt_box_x1 + (gt_box_width/2)
+        gt_center_y   = gt_box_y1 + (gt_box_height/2)
 
         gt_box = [gt_center_x, gt_center_y, gt_box_width, gt_box_height]
 
@@ -106,7 +106,7 @@ def label_formatting(gt_class_labels, gt_boxes, anchors_list, subsampled_ratio, 
         prospect_anchors = anchors_list[responsible_grid[0]][responsible_grid[1]]
 
         #get the index of the anchor from the responsible grid with the highest IoU.
-        chosen_anchor_index = get_highest_iou_anchor(anchors=anchors_list, gt_box=gt_box)
+        chosen_anchor_index = get_highest_iou_anchor(anchors=prospect_anchors, gt_box=gt_box)
 
         chosen_anchor = prospect_anchors[chosen_anchor_index] #the chosen anchor. [pr(obj), x, y, w, h]
 

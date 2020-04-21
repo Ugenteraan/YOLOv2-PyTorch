@@ -2,15 +2,10 @@ import numpy as np
 
 
 class K_Means:
-    '''
-    Modified K-Means to find the top-k bounding boxes from the dataset.
-    '''
-
+    
+    
     def __init__(self, k, boxes):
-        '''
-        Initialize parameters and k centroids.
-        '''
-
+        
         self.k = k
         self.boxes = boxes
         self.rows = self.boxes.shape[0]
@@ -23,28 +18,21 @@ class K_Means:
             self.centroids.append(self.boxes[i,:])
         
         self.centroids = np.asarray(self.centroids, dtype=np.float32)
-
-
+        
     def process_boxes(self, boxes):
-        '''
-        For all the given boxes, translate them from [x1,y1,x2,y2] to [w,h]
-        '''
+        
         new_boxes = boxes.copy()
         for row in range(self.rows):
             
-            new_boxes[row][2] = np.abs(new_boxes[row][2] - new_boxes[row][0]) #width
-            new_boxes[row][3] = np.abs(new_boxes[row][3] - new_boxes[row][1]) #height
+            new_boxes[row][2] = np.abs(new_boxes[row][2] - new_boxes[row][0])
+            new_boxes[row][3] = np.abs(new_boxes[row][3] - new_boxes[row][1])
         
-        return np.delete(new_boxes, [0,1], axis=1) #no longer need x1 and y1.
-
-
+        return np.delete(new_boxes, [0,1], axis=1)
+    
     def iou(self, box, centroids):
-        '''
-        Find the IoU between one box and all the centroids.
-        '''
         
-        x = np.minimum(centroids[:, 0], box[0]) #get all the heights
-        y = np.minimum(centroids[:, 1], box[1]) #get all the widths
+        x = np.minimum(centroids[:, 0], box[0])
+        y = np.minimum(centroids[:, 1], box[1])
         
         if np.count_nonzero(x == 0) > 0 or np.count_nonzero(y == 0) > 0:
             raise ValueError("The given box has no area!")
@@ -56,11 +44,9 @@ class K_Means:
         IoUs = intersection_area / (box_area + centroid_area - intersection_area)
         
         return IoUs
-
+    
     def __call__(self):
-        '''
-        Iteratively find k bounding boxes.
-        '''
+        
         
         while True:
             
