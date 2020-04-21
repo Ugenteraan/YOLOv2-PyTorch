@@ -1,7 +1,7 @@
 import xmltodict
 import numpy as np
 from K_Means import K_Means
-from skimage import io, transform
+import cv2
 from label_format import label_formatting
 
 def get_classes(xml_files):
@@ -207,8 +207,9 @@ def read_image(image_path, resized_image_size):
     Read a single image from the given index into a numpy array.
     '''
 
-    im_ = io.imread(image_path)
-    im_ = transform.resize(im_, (resized_image_size, resized_image_size)) #resize image
+    im_ = cv2.imread(image_path)
+    im_ = cv2.cvtColor(im_, cv2.COLOR_BGR2RGB)
+    im_ = cv2.resize(im_, (resized_image_size, resized_image_size))
     img = im_/255 #normalize image
 
     return np.asarray(img, dtype=np.float32)

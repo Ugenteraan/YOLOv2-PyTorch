@@ -30,13 +30,14 @@ def get_highest_iou_anchor(anchors, gt_box):
     Returns the index of the anchor with the highest IoU provided the anchor has not been assigned with an object already. Else the next anchor
     with the highest IoU will be returned.
     '''
-
+    #extract the height and widths of the boxes.
     x = np.minimum(anchors[:, -2], gt_box[2])
     y = np.minimum(anchors[:, -1], gt_box[3])
 
     if np.count_nonzero(x == 0) > 0 or np.count_nonzero(y == 0) > 0:
         raise ValueError ('The given box has no area!')
-
+    
+    #since the height and width of the boxes have the same origin, we can calculate the intersection simply by multiplying them.
     intersection_area   = x*y 
     gt_box_area         = gt_box[2] * gt_box[3]
     anchors_area        = anchors[:, -2] * anchors[:, -1]
@@ -134,3 +135,57 @@ def label_formatting(gt_class_labels, gt_boxes, anchors_list, subsampled_ratio, 
         class_label_array[responsible_grid[0]][responsible_grid[1]][chosen_anchor_index][class_label_index] = 1.0
 
     return regression_objectness_array, class_label_array
+
+
+def calculate_ground_truth(subsampled_ratio, anchors_list, resized_image_size, network_prediction, prob_threshold):
+    '''
+    Given the regression predictions from the network in batches, calculate back the predicted box's coordinates for every image.
+    '''
+
+    assert prob_threshold < 1 and prob_threshold > 0, "The objectness probability threshold has to be between 0 and 1."
+
+    predicted_data_num = network_prediction.shape[0] #number of data in the batch.
+
+    #set the array values for the predicted objectness probability lower than the threshold to 0.
+    boolean_array = network_prediction[:,:,:,:,0] < prob_threshold 
+    network_prediction[boolean_array] = 0 
+
+    entire_batch_transformed_values = []
+
+    for i in range(predicted_data_num): #loop through every item in the batch.
+
+        predicted_arrays = network_prediction[i] #get the predicted objectness probabilities and regression values for the particular image.
+
+        occupied_array_indexes = np.nonzero(predicted_arrays[:,:,:,0]) #get the indexes of the arrays that does not have 0 as their objectness probability.
+
+        num_of_occupied_arrays = occupied_array_indexes[0].shape[0]
+
+        transformed_values = [] #to hold the transformed values (from predicted regressions into ground truth boxes)
+
+        for j in range(num_of_occupied_arrays): #loop through every occupied anchors in a particular batch index.
+
+            gridX = occupied_array_indexes[0][j] #responsible X-grid.
+            gridY = occupied_array_indexes[1][j] #responsible Y-grid.
+            anchor_index = occupied_array_indexes[2][j] #responsible anchor index.
+
+            #center coordinates of the predicted box.
+            center_x = (predicted_arrays[gridX][gridY][anchor_index][1]*subsampled_ratio) + (gridX*subsampled_ratio)
+            center_y = (predicted_arrays[gridX][gridY][anchor_index][2]*subsampled_ratio) + (gridY*subsampled_ratio)
+
+            width  = (anchors_list[gridX][gridY][anchor_index][3])*(math.e**(predicted_arrays[gridX][gridY][anchor_index][3]))
+            height = (anchors_list[gridX][gridY][anchor_index][4])*(math.e**(predicted_arrays[gridX][gridY][anchor_index][4]))
+
+            x1 = center_x - width/2
+            y1 = center_y - height/2
+            x2 = center_x + width/2
+            y2 = center_y + height/2
+
+            transformed_values.append([x1,y1,x2,y2])
+        
+        entire_batch_transformed_values.append(transformed_values)
+    
+    return np.asarray(entire_batch_transformed_values, dtype=np.float32)
+
+
+
+
