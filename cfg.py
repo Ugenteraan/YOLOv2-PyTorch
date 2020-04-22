@@ -10,6 +10,10 @@ detection_conv_size = 3
 subsampled_ratio = 32
 k = 5 #number of anchor box in a grid
 learning_rate = 1e-5
+lambda_coord = 5
+lambda_noobj = 0.5
+epsilon_value = 1e-8
+total_epoch = 10
 
 #Get the image and annotation file paths
 list_images      = sorted([x for x in glob.glob(data_images_path + '/**')])     #length : 17125

@@ -73,8 +73,9 @@ def label_formatting(gt_class_labels, gt_boxes, anchors_list, subsampled_ratio, 
     num_of_classes = len(classes)
 
     #this array will be used to store the ground truth probability of objectness,  offset calculations between the responsible anchors
-    #and the ground-truth boxes and the class of the object.
-    label_array = np.zeros((subsampled_size, subsampled_size, anchors_list.shape[-2], 5+num_of_classes), dtype=np.float32)
+    #and the ground-truth boxes and the class of the object. The class of the object will just be an integer since PyTorch's cross entropy
+    #will convert it into one hot label for us.
+    label_array = np.zeros((subsampled_size, subsampled_size, anchors_list.shape[-2], 6), dtype=np.float32)
 
 
     
@@ -124,15 +125,12 @@ def label_formatting(gt_class_labels, gt_boxes, anchors_list, subsampled_ratio, 
         th = math.log(gt_box_height/chosen_anchor[4])
 
         #objectness probability + regression values
-        regression_values = np.asarray([1.0, sigmoid_tx, sigmoid_ty, tw, th], dtype=np.float32)
+        label_values = np.asarray([1.0, sigmoid_tx, sigmoid_ty, tw, th, class_label_index], dtype=np.float32)
 
         #We need to occupy the probability of objnectness and the regression values in the chosen anchor's index.
-        label_array[responsible_grid[0]][responsible_grid[1]][chosen_anchor_index][:5] = regression_values
+        label_array[responsible_grid[0]][responsible_grid[1]][chosen_anchor_index][:] = label_values
         
-        #mark the class of an object.
-        label_array[responsible_grid[0]][responsible_grid[1]][chosen_anchor_index][5+class_label_index] = 1.0
         
-
     return label_array
 
 

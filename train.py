@@ -4,22 +4,42 @@ from torch.utils.data import DataLoader
 import cv2
 from label_format import calculate_ground_truth
 import numpy as np
-from yolo_net import yolo
-
+from yolo_net import yolo, optimizer, loss
+from tqdm import tqdm
 
 training_data = Load_Dataset(resized_image_size=320, transform=ToTensor())
 
-dataloader = DataLoader(training_data, batch_size=1, shuffle=True, num_workers=4)
+dataloader = DataLoader(training_data, batch_size=10, shuffle=True, num_workers=4)
 
 print(yolo)
 
-for i, sample in enumerate(dataloader):
-    print(sample["image"].shape)
-    print(sample["label"].shape)
+for epoch_idx in range(cfg.total_epoch):
     
-    output = yolo(sample["image"].cuda())
-    print(output.size())
-    break
+    epoch_loss = 0
+    training_loss = []
+
+    for i, sample in tqdm(enumerate(dataloader)):
+        # print(sample["image"].shape)
+        # print(sample["label"].shape)
+        
+        batch_x, batch_y = sample["image"].cuda(), sample["label"].cuda()
+        
+        optimizer.zero_grad()
+        
+        outputs = yolo(batch_x)
+        total_loss = loss(predicted_array= outputs, label_array=batch_y)
+        training_loss.append(total_loss.item())
+        total_loss.backward()
+        optimizer.step()
+        
+        # print(total_loss.item())
+    
+    training_loss = np.average(training_loss)
+    print("Epoch %d, \t Loss : %g"%(epoch_idx, training_loss))
+    
+    
+        
+    
     # calculated_batch = calculate_ground_truth(subsampled_ratio=32, anchors_list=training_data.anchors_list, resized_image_size=320, 
     #                         network_prediction=sample["regression_objectness"].numpy(), prob_threshold=0.5 )
 

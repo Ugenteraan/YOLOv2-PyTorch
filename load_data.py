@@ -21,9 +21,9 @@ class ToTensor:
 
         image = image.transpose((2,0,1)) #pytorch requires the channel to be in the 1st dimension of the tensor,
         
+        
         return {'image':torch.from_numpy(image.astype('float32')),
-                'label': torch.from_numpy(label)
-            }      
+                'label': torch.from_numpy(label)}      
 
 
 
@@ -78,7 +78,7 @@ class Load_Dataset(Dataset):
         image, label_array = generate_training_data(data_index=idx, anchors_list=self.anchors_list, 
                                         xml_file_path=self.list_annotations[idx], classes=self.classes, resized_image_size=self.resized_image_size, 
                                     subsampled_ratio=self.subsampled_ratio, excluded_classes=self.excluded_classes, image_path=self.list_images[idx])
-
+        
         sample = {'image':image,
                  'label':label_array}
         

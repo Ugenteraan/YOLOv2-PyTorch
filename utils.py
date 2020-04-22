@@ -232,5 +232,6 @@ def generate_training_data(data_index, anchors_list, xml_file_path, classes, res
     label_array = label_formatting(gt_class_labels=object_labels, gt_boxes=gt_boxes, anchors_list=anchors_list,
                                                             subsampled_ratio=subsampled_ratio, resized_image_size=resized_image_size, classes=classes)
 
-
+    
+    
     return (image_array, label_array)
