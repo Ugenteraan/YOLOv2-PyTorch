@@ -8,7 +8,8 @@ image_sizes = [320,352,384,416,448,480,512,544,570,608]
 image_depth  = 3
 detection_conv_size = 3
 subsampled_ratio = 32
-
+k = 5 #number of anchor box in a grid
+learning_rate = 1e-5
 
 #Get the image and annotation file paths
 list_images      = sorted([x for x in glob.glob(data_images_path + '/**')])     #length : 17125

@@ -229,8 +229,8 @@ def generate_training_data(data_index, anchors_list, xml_file_path, classes, res
     image_array = read_image(image_path=image_path, resized_image_size=resized_image_size)
 
     #label formatting
-    regression_objectness_array, class_label_array = label_formatting(gt_class_labels=object_labels, gt_boxes=gt_boxes, anchors_list=anchors_list,
+    label_array = label_formatting(gt_class_labels=object_labels, gt_boxes=gt_boxes, anchors_list=anchors_list,
                                                             subsampled_ratio=subsampled_ratio, resized_image_size=resized_image_size, classes=classes)
 
 
-    return (image_array, regression_objectness_array, class_label_array)
+    return (image_array, label_array)

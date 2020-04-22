@@ -1,19 +1,25 @@
-from load_data import Load_Dataset
+from load_data import Load_Dataset, ToTensor
 import cfg
 from torch.utils.data import DataLoader
 import cv2
 from label_format import calculate_ground_truth
 import numpy as np
+from yolo_net import yolo
 
 
-training_data = Load_Dataset(resized_image_size=320)
+training_data = Load_Dataset(resized_image_size=320, transform=ToTensor())
 
 dataloader = DataLoader(training_data, batch_size=1, shuffle=True, num_workers=4)
 
-# for i, sample in enumerate(dataloader):
-    # print(sample["image"].shape)
-    # print(sample["regression_objectness"].shape)
+print(yolo)
 
+for i, sample in enumerate(dataloader):
+    print(sample["image"].shape)
+    print(sample["label"].shape)
+    
+    output = yolo(sample["image"].cuda())
+    print(output.size())
+    break
     # calculated_batch = calculate_ground_truth(subsampled_ratio=32, anchors_list=training_data.anchors_list, resized_image_size=320, 
     #                         network_prediction=sample["regression_objectness"].numpy(), prob_threshold=0.5 )
 

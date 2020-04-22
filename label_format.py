@@ -72,12 +72,10 @@ def label_formatting(gt_class_labels, gt_boxes, anchors_list, subsampled_ratio, 
 
     num_of_classes = len(classes)
 
-    #this array will be used to store the ground truth probability of objectness and the offset calculations between the responsible anchors
-    #and the ground-truth boxes. Hence the similarity of the shape of this array with the anchor lists array.
-    regression_objectness_array = np.zeros((subsampled_size, subsampled_size, anchors_list.shape[-2], 5), dtype=np.float32)
+    #this array will be used to store the ground truth probability of objectness,  offset calculations between the responsible anchors
+    #and the ground-truth boxes and the class of the object.
+    label_array = np.zeros((subsampled_size, subsampled_size, anchors_list.shape[-2], 5+num_of_classes), dtype=np.float32)
 
-    #this array will be used to store the class of the present objects in the responsible anchors.
-    class_label_array = np.zeros((subsampled_size, subsampled_size, anchors_list.shape[-2], num_of_classes), dtype=np.float32)
 
     
     #An image can contain more than 1 objects.
@@ -129,12 +127,13 @@ def label_formatting(gt_class_labels, gt_boxes, anchors_list, subsampled_ratio, 
         regression_values = np.asarray([1.0, sigmoid_tx, sigmoid_ty, tw, th], dtype=np.float32)
 
         #We need to occupy the probability of objnectness and the regression values in the chosen anchor's index.
-        regression_objectness_array[responsible_grid[0]][responsible_grid[1]][chosen_anchor_index] = regression_values
+        label_array[responsible_grid[0]][responsible_grid[1]][chosen_anchor_index][:5] = regression_values
+        
+        #mark the class of an object.
+        label_array[responsible_grid[0]][responsible_grid[1]][chosen_anchor_index][5+class_label_index] = 1.0
+        
 
-        #mark the class of the object 
-        class_label_array[responsible_grid[0]][responsible_grid[1]][chosen_anchor_index][class_label_index] = 1.0
-
-    return regression_objectness_array, class_label_array
+    return label_array
 
 
 def calculate_ground_truth(subsampled_ratio, anchors_list, resized_image_size, network_prediction, prob_threshold):

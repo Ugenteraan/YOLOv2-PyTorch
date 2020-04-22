@@ -16,15 +16,14 @@ class ToTensor:
 
     def __call__(self, sample):
 
-        image                   = sample['image']
-        regression_objectness   = sample['regression_objectness']
-        classification          = sample['classification']
+        image   = sample['image']
+        label   = sample['label']
 
         image = image.transpose((2,0,1)) #pytorch requires the channel to be in the 1st dimension of the tensor,
         
         return {'image':torch.from_numpy(image.astype('float32')),
-                'regression_objectness': torch.from_numpy(regression_objectness),
-                'classification': torch.from_numpy(classification)}
+                'label': torch.from_numpy(label)
+            }      
 
 
 
@@ -33,7 +32,7 @@ class Load_Dataset(Dataset):
     Wraps the loading of the dataset in PyTorch's DataLoader module.
     '''
 
-    def __init__(self, resized_image_size, k=5, classes = cfg.classes, list_images = cfg.list_images, list_annotations = cfg.list_annotations, 
+    def __init__(self, resized_image_size, k=cfg.k, classes = cfg.classes, list_images = cfg.list_images, list_annotations = cfg.list_annotations, 
                  total_images = cfg.total_images, subsampled_ratio=cfg.subsampled_ratio, detection_conv_size=cfg.detection_conv_size, 
                                                                                             excluded_classes=cfg.excluded_classes, transform=None):
 
@@ -76,13 +75,12 @@ class Load_Dataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
         
-        image, regression_objectness_array, class_label_array = generate_training_data(data_index=idx, anchors_list=self.anchors_list, 
+        image, label_array = generate_training_data(data_index=idx, anchors_list=self.anchors_list, 
                                         xml_file_path=self.list_annotations[idx], classes=self.classes, resized_image_size=self.resized_image_size, 
                                     subsampled_ratio=self.subsampled_ratio, excluded_classes=self.excluded_classes, image_path=self.list_images[idx])
 
         sample = {'image':image,
-                 'regression_objectness':regression_objectness_array,
-                 'classification' : class_label_array}
+                 'label':label_array}
         
         if self.transform:
             sample = self.transform(sample)
