@@ -121,8 +121,8 @@ def loss(predicted_array, label_array):
     wrong_objectness_loss = cfg.lambda_noobj * torch.sum(gt_noObjectness*(gt_objectness - predicted_objectness)**2)
     
     #get the predicted probability of the classes and the ground truth class probabilities.
-    predicted_classes = predicted_array[:,:,:,:,5:]
-    gt_classes        = label_array[:,:,:,:,5].type(torch.int64)
+    # predicted_classes = predicted_array[:,:,:,:,5:]
+    # gt_classes        = label_array[:,:,:,:,5].type(torch.int64)
     
     # print(gt_objectness.size())
     # print(gt_classes.size())

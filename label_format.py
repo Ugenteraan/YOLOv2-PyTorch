@@ -70,8 +70,6 @@ def label_formatting(gt_class_labels, gt_boxes, anchors_list, subsampled_ratio, 
     
     subsampled_size = int(resized_image_size/subsampled_ratio)
 
-    num_of_classes = len(classes)
-
     #this array will be used to store the ground truth probability of objectness,  offset calculations between the responsible anchors
     #and the ground-truth boxes and the class of the object. The class of the object will just be an integer since PyTorch's cross entropy
     #will convert it into one hot label for us.
