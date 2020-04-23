@@ -111,6 +111,7 @@ def loss(predicted_array, label_array):
     # size_loss = cfg.lambda_coord * gt_objectness * ((torch.sqrt(predicted_width + cfg.epsilon_value) - torch.sqrt(gt_width)**2 + 
     #                                                 (torch.sqrt(predicted_height + cfg.epsilon_value) - torch.sqrt(gt_height)**2)
     
+    #mean square size loss without the square roots.
     size_loss = cfg.lambda_coord * torch.sum(gt_objectness * ((predicted_width  - gt_width)**2 + (predicted_height - gt_height)**2))
     
     #get the predicted probability of objectness
