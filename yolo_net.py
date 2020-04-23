@@ -130,7 +130,7 @@ def loss(predicted_array, label_array):
     gt_classes        = label_array[:,:,:,:,5].type(torch.long).contiguous().transpose(1,-1)
     
     #cross-entropy loss between the predicted and label and sum all the losses.
-    classification_loss = NN.CrossEntropyLoss()(target=gt_classes, input=predicted_classes, reduction="sum")
+    classification_loss = NN.CrossEntropyLoss(reduction="sum")(target=gt_classes, input=predicted_classes)
     
     #sum all the losses together
     total_loss = center_loss + size_loss + objectness_loss + wrong_objectness_loss + classification_loss
