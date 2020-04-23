@@ -93,8 +93,8 @@ def loss(predicted_array, label_array):
     gt_noObjectness = mask - gt_objectness
     
     #get the center values from both the arrays.
-    predicted_centerX = torch.nn.Sigmoid()(predicted_array[:,:,:,:,1:2])
-    predicted_centerY = torch.nn.Sigmoid()(predicted_array[:,:,:,:,2:3])
+    predicted_centerX = NN.Sigmoid()(predicted_array[:,:,:,:,1:2])
+    predicted_centerY = NN.Sigmoid()(predicted_array[:,:,:,:,2:3])
     gt_centerX        = label_array[:,:,:,:,1:2]
     gt_centerY        = label_array[:,:,:,:,2:3]
     
@@ -114,26 +114,25 @@ def loss(predicted_array, label_array):
     size_loss = cfg.lambda_coord * torch.sum(gt_objectness * ((predicted_width  - gt_width)**2 + (predicted_height - gt_height)**2))
     
     #get the predicted probability of objectness
-    predicted_objectness = torch.nn.Sigmoid()(predicted_array[:,:,:,:,0:1])
+    predicted_objectness = NN.Sigmoid()(predicted_array[:,:,:,:,0:1])
     
     objectness_loss = torch.sum(gt_objectness*(gt_objectness - predicted_objectness)**2)
     
     wrong_objectness_loss = cfg.lambda_noobj * torch.sum(gt_noObjectness*(gt_objectness - predicted_objectness)**2)
     
     #get the predicted probability of the classes and the ground truth class probabilities.
-    # predicted_classes = predicted_array[:,:,:,:,5:]
-    # gt_classes        = label_array[:,:,:,:,5].type(torch.int64)
+    predicted_classes = gt_objectness * predicted_array[:,:,:,:,5:] #zeroes the arrays that does not contain object!
     
-    # print(gt_objectness.size())
-    # print(gt_classes.size())
-    # print(predicted_classes.size())
-    # print((gt_objectness*predicted_classes).size())
+    #cross entropy requires the format of (N,C,d1,d2,...dk) where N : batch size, C: class size, and di are other dimensions for the predicted vectors.
+    #as for the target, it requires the format of (N, d1,d2,..,dk) and the values are from 0 to number of classes (Scalar values).
+    predicted_classes = predicted_classes.contiguous().transpose(1,-1).transpose(-3,-2) 
+    gt_classes        = label_array[:,:,:,:,5].type(torch.long).contiguous().transpose(1,-1)
     
-    #cross-entropy loss between the predicted and label
-    # classification_loss = NN.CrossEntropyLoss()(gt_classes, gt_objectness*predicted_classes)
+    #cross-entropy loss between the predicted and label and sum all the losses.
+    classification_loss = NN.CrossEntropyLoss()(target=gt_classes, input=predicted_classes, reduction="sum")
     
     #sum all the losses together
-    total_loss = center_loss + size_loss + objectness_loss + wrong_objectness_loss 
+    total_loss = center_loss + size_loss + objectness_loss + wrong_objectness_loss + classification_loss
     
     return total_loss
     
