@@ -137,7 +137,7 @@ def calculate_ground_truth(subsampled_ratio, anchors_list, resized_image_size, n
     Given the regression predictions from the network in batches, calculate back the predicted box's coordinates for every image.
     '''
 
-    assert prob_threshold < 1 and prob_threshold > 0, "The objectness probability threshold has to be between 0 and 1."
+    assert prob_threshold <= 1 and prob_threshold >= 0, "The objectness probability threshold has to be a value from 0 to 1."
 
     predicted_data_num = network_prediction.shape[0] #number of data in the batch.
 

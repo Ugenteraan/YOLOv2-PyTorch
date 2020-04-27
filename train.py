@@ -6,6 +6,7 @@ from label_format import calculate_ground_truth
 import numpy as np
 from yolo_net import yolo, optimizer, loss
 from tqdm import tqdm
+from post_process import calculate_meanAP
 
 training_data = Load_Dataset(resized_image_size=320, transform=ToTensor())
 
@@ -26,11 +27,15 @@ for epoch_idx in range(cfg.total_epoch):
         
         optimizer.zero_grad()
         
+        #[batch size, feature map width, feature map height, number of anchors, 5 + number of classes]
         outputs = yolo(batch_x)
+        
         total_loss = loss(predicted_array= outputs, label_array=batch_y)
+        mean_AP = calculate_meanAP(predicted_boxes=outputs.detach().cpu().numpy(), gt_boxes=batch_y.cpu().numpy(), anchors_list=training_data.anchors_list)
         training_loss.append(total_loss.item())
         total_loss.backward()
         optimizer.step()
+        break
         
         # print(total_loss.item())
     
