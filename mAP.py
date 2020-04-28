@@ -54,9 +54,44 @@ class mAP:
         print("SHAPES!")
         print(transformed_top_gt_boxes)
         print(transformed_top_pred_boxes.shape)
-        print(transformed_top_pred_boxes)
+        # print(transformed_top_pred_boxes)
+        a = self.calculate_iou(transformed_top_pred_boxes[0], transformed_top_gt_boxes[0][0])
+        print(a)
+        print(a.shape)
+        
         
         return True
+    
+    
+    def calculate_iou(self, predicted_boxes, gt_box):
+        '''
+        Calculates the IoU between topN predicted boxes and one ground-truth box.
+        '''
+        
+        x = np.minimum(predicted_boxes[:,1] + predicted_boxes[:,3], gt_box[1] + gt_box[3]) - np.maximum(predicted_boxes[:,1], gt_box[1])
+        y = np.minimum(predicted_boxes[:,2] + predicted_boxes[:,4], gt_box[2] + gt_box[4]) - np.maximum(predicted_boxes[:,2], gt_box[2])
+        
+        intersection = x * y
+        union = (predicted_boxes[:, 3] * predicted_boxes[:, 4]) + (gt_box[3] * gt_box[4])
+        
+        #returns a numpy array of shape [topN] where each element represents the IoU between the predicted box and the ground-truth box.
+        return intersection/union
+        
+    
+    def determine_AP(self, predicted_boxes, gt_boxes):
+        '''
+        Determine the precision and recall for a single batch of prediction.
+        '''
+        
+        for i in range(self.top_N):
+            
+            
+            
+            
+            
+        
+        
+        
         
         
     
@@ -92,7 +127,8 @@ class mAP:
                     width = (self.anchors_list[gridX][gridY][anchor_index][3])*(math.e**(gt_array[gridX][gridY][anchor_index][3]))
                     height = (self.anchors_list[gridX][gridY][anchor_index][4])*(math.e**(gt_array[gridX][gridY][anchor_index][4]))
 
-                    transformed_values.append([gt_array[gridX][gridY][anchor_index][0], center_x, center_y, width, height])
+                    transformed_values.append([gt_array[gridX][gridY][anchor_index][0], center_x, center_y, width, height, 
+                                               gt_array[gridX][gridY][anchor_index][5]])
                 
                 batch_transformed_values.append(transformed_values)
         
@@ -116,7 +152,7 @@ class mAP:
                     width = (self.anchors_list[gridX][gridY][anchor_index][3])*(math.e**(predicted_array[j][3]))
                     height = (self.anchors_list[gridX][gridY][anchor_index][4])*(math.e**(predicted_array[j][4]))
                     
-                    transformed_values.append([predicted_array[j][0],center_x, center_y, width, height])
+                    transformed_values.append([predicted_array[j][0],center_x, center_y, width, height, np.argmax(predicted_array[j][5:])])
             
         
                 batch_transformed_values.append(np.asarray(transformed_values, dtype=np.float32))

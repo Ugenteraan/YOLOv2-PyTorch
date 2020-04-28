@@ -20,7 +20,9 @@ class K_Means:
         self.centroids = np.asarray(self.centroids, dtype=np.float32)
         
     def process_boxes(self, boxes):
-        
+        '''
+        This assumes that the boxes are normalized to their width and height, therefore all boxes will be overlapping each other.
+        '''
         new_boxes = boxes.copy()
         for row in range(self.rows):
             
