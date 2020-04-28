@@ -64,6 +64,24 @@ class YOLOv2(NN.Module):
          
         if init_weights:
             self._initialize_weights()
+    
+    
+    def activate(self, prediction):
+        '''
+        Apply activation functions on the predicted confidence and centers.
+        '''
+        placeholder_tensor = torch.zeros_like(prediction)
+        predicted_confidence = NN.Sigmoid()(prediction[:,:,:,:,0:1])
+        predicted_centerX = NN.Sigmoid()(prediction[:,:,:,:,1:2])
+        predicted_centerY = NN.Sigmoid()(prediction[:,:,:,:,2:3])
+        
+        placeholder_tensor[:,:,:,:,0:1] = predicted_confidence
+        placeholder_tensor[:,:,:,:,1:2] = predicted_centerX
+        placeholder_tensor[:,:,:,:,2:3] = predicted_centerY
+        placeholder_tensor[:,:,:,:,3:] = prediction[:,:,:,:,3:]
+        
+        return placeholder_tensor
+        
         
     
     def forward(self, input_x):
@@ -75,6 +93,8 @@ class YOLOv2(NN.Module):
         x = torch.transpose(x, 1, -1) 
         #reshape the output into [batch size, feature map width, feature map height, number of anchors, 5 + number of classes]
         x = x.view(-1, subsampled_feature_size, subsampled_feature_size, self.k, 5+self.num_classes)
+        
+        x = self.activate(x)
         
         return x
     
@@ -93,8 +113,8 @@ def loss(predicted_array, label_array):
     gt_noObjectness = mask - gt_objectness
     
     #get the center values from both the arrays.
-    predicted_centerX = NN.Sigmoid()(predicted_array[:,:,:,:,1:2])
-    predicted_centerY = NN.Sigmoid()(predicted_array[:,:,:,:,2:3])
+    predicted_centerX = predicted_array[:,:,:,:,1:2]
+    predicted_centerY = predicted_array[:,:,:,:,2:3]
     gt_centerX        = label_array[:,:,:,:,1:2]
     gt_centerY        = label_array[:,:,:,:,2:3]
     
@@ -115,7 +135,7 @@ def loss(predicted_array, label_array):
     size_loss = cfg.lambda_coord * torch.sum(gt_objectness * ((predicted_width  - gt_width)**2 + (predicted_height - gt_height)**2))
     
     #get the predicted probability of objectness
-    predicted_objectness = NN.Sigmoid()(predicted_array[:,:,:,:,0:1])
+    predicted_objectness = predicted_array[:,:,:,:,0:1]
     
     objectness_loss = torch.sum(gt_objectness*(gt_objectness - predicted_objectness)**2)
     

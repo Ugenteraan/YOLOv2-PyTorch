@@ -1,18 +1,15 @@
-'''
-This file contain modules that are useful for post-processing of YOLO such as calculation of mAP, non-max suppression, etc and modules related to them.
-'''
 import cfg
 import numpy as np
+import math
 
 
 
-
-class PostProcessing:
+class mAP:
     '''
-    Post Processing class contains modules to calculate mAP, non-max suppression, and modules related to these.
+    This class contains modules to calculate mAP .
     '''
     
-    def __init__(self, box_num_per_grid, feature_size, topN_pred, anchors_list):
+    def __init__(self, box_num_per_grid, feature_size, topN_pred, anchors_list, IoU_threshold=0.6, subsampled_ratio=cfg.subsampled_ratio):
         '''
         Initialize parameters. 
         box_num_per_grid : the number of anchors/boxes in a grid/cell.
@@ -21,14 +18,16 @@ class PostProcessing:
         '''
         
         self.num_of_anchor  = box_num_per_grid
-        self.topN_pred      = topN_pred
+        self.top_N     = topN_pred
         self.anchors_list   = anchors_list
         self.feature_size   = feature_size
-        
+        self.subsampled_ratio = subsampled_ratio
+        self.iou_threshold = IoU_threshold
         
     
     
-    def calculate_meanAP(self, predicted_boxes, gt_boxes, anchors_list=self.anchors_list):
+    
+    def calculate_meanAP(self, predicted_boxes, gt_boxes):
         '''
         1) Rank the predicted boxes in decreasing order based on the confidence score and choose top-N boxes.
         2) For every chosen boxes, determine if they are TP, FP or FN based on its IoU with the ground-truth boxes (There is no TN since an image 
@@ -44,23 +43,89 @@ class PostProcessing:
         5) Calculate Average Precision (AP) by taking the Area Under Curve of Interpolated Precision for each class.
         6) Mean the AP over all classes.
         '''
+        
 
-        top_boxes, top_indexes = self.get_topN_prediction(predicted_boxes)
+        top_boxes_regressionValue, top_indexes = self.get_topN_prediction(predicted_boxes)
         
+
+        transformed_top_pred_boxes = np.asarray(self.get_box_coordinates(boxes=top_boxes_regressionValue, indexes=top_indexes), dtype=np.float32)
+        transformed_top_gt_boxes = self.get_box_coordinates(boxes=gt_boxes)
+        
+        print("SHAPES!")
+        print(transformed_top_gt_boxes)
+        print(transformed_top_pred_boxes.shape)
+        print(transformed_top_pred_boxes)
+        
+        return True
         
         
     
-    
-    def get_box_coordinates(self, boxes, indexes=None, anchors_list=self.anchors_list):
+    def get_box_coordinates(self, boxes, indexes=None):
         '''
         Based on the regression values, calculate back the [x,y,w,h] of the boxes. 
         '''
         
+        batch_size = boxes.shape[0]
+        batch_transformed_values = []
         
+        if indexes is None: #when the ground-truth boxes are given
+            
+            for i in range(batch_size):
+                
+                gt_array = boxes[i]
+                
+                transformed_values = []
+                
+                occupied_array_indexes = np.nonzero(gt_array[:,:,:,0]) #get the indexes of the arrays that does not have 0 as their confidence value.
+                
+                num_of_occupied_arrays = occupied_array_indexes[0].shape[0] #num of objects.
+                
+                for j in range(num_of_occupied_arrays):
+                    
+                    #responsible grids and anchor index.
+                    gridX = occupied_array_indexes[0][j]
+                    gridY = occupied_array_indexes[1][j]
+                    anchor_index = occupied_array_indexes[2][j]
+                    
+                    center_x = (gt_array[gridX][gridY][anchor_index][1]*self.subsampled_ratio) + (gridX*self.subsampled_ratio)
+                    center_y = (gt_array[gridX][gridY][anchor_index][2]*self.subsampled_ratio) + (gridY*self.subsampled_ratio)
+                    width = (self.anchors_list[gridX][gridY][anchor_index][3])*(math.e**(gt_array[gridX][gridY][anchor_index][3]))
+                    height = (self.anchors_list[gridX][gridY][anchor_index][4])*(math.e**(gt_array[gridX][gridY][anchor_index][4]))
+
+                    transformed_values.append([gt_array[gridX][gridY][anchor_index][0], center_x, center_y, width, height])
+                
+                batch_transformed_values.append(transformed_values)
         
-    
-    
-    def get_topN_prediction(self, predicted_boxes, top_N=self.topN_pred):
+        else: #when the topN predicted boxes are given
+            
+            for i in range(batch_size):
+                
+                predicted_array = boxes[i]
+                
+                transformed_values = []
+                
+                for j in range(self.top_N):
+                    
+                    #NOTE : indexes is a tuple where the first element: x-values, second element : y values, and third element: anchor index.
+                    gridX = indexes[0][i][j]
+                    gridY = indexes[1][i][j]
+                    anchor_index = indexes[2][i][j]
+                    
+                    center_x = (predicted_array[j][1]*self.subsampled_ratio) + (gridX*self.subsampled_ratio)
+                    center_y = (predicted_array[j][2]*self.subsampled_ratio) + (gridY*self.subsampled_ratio)
+                    width = (self.anchors_list[gridX][gridY][anchor_index][3])*(math.e**(predicted_array[j][3]))
+                    height = (self.anchors_list[gridX][gridY][anchor_index][4])*(math.e**(predicted_array[j][4]))
+                    
+                    transformed_values.append([predicted_array[j][0],center_x, center_y, width, height])
+            
+        
+                batch_transformed_values.append(np.asarray(transformed_values, dtype=np.float32))
+                
+        return batch_transformed_values
+                
+
+
+    def get_topN_prediction(self, predicted_boxes):
         '''
         Returns the top N predicted array based on the confidence scores.
         NOTE: I could not find a way to sort ALL the boxes based on the confidence score using a numpy function. This is due to the fact that our 
@@ -72,10 +137,9 @@ class PostProcessing:
                 (feature map width : 0 to width-1) and there are k number of anchors/boxes in each grid.
         '''
         #get the batch size, feature size and the number of bounding boxes inside each grid.
-        shape           = predicted_boxes.shape
-        batch_size      = shape[0]
-        feature_size    = shape[1]
-        num_of_anchor   = cfg.k
+        batch_size      = predicted_boxes.shape[0]
+        feature_size    = self.feature_size
+        num_of_anchor   = self.num_of_anchor
         
         #reshape the array with confidence scores only.
         flatten_pred = predicted_boxes[:,:,:,:,0].reshape(-1, feature_size*feature_size*num_of_anchor)
@@ -83,7 +147,7 @@ class PostProcessing:
         #sort the arrays in ascending order and np.flip it to get it in the decreasing order.
         sorted_indexes = np.flip(flatten_pred.argsort(axis=1), axis=1)
         
-        topN_indexes = sorted_indexes[:,:top_N] #Get the top N predictions from the entire batch.
+        topN_indexes = sorted_indexes[:,:self.top_N] #Get the top N predictions from the entire batch.
         
         #use the defined function to convert the indexes to a grid-like indexes.
         cvtGenerator = lambda x:self.cvt_flattenedIndex2gridIndex(flattened_index=x)
@@ -106,15 +170,15 @@ class PostProcessing:
 
 
 
-    def cvt_flattenedIndex2gridIndex(self, flattened_index, feature_size=self.feature_size, num_of_anchor=self.num_of_anchor):
+    def cvt_flattenedIndex2gridIndex(self, flattened_index):
         '''
         Converts the given index which was obtained from the flattened array back to the grid-like index.
         '''
         
-        num_boxes_in_a_row = feature_size*num_of_anchor #number of boxes/anchors in an entire row of grids.
+        num_boxes_in_a_row = self.feature_size*self.num_of_anchor #number of boxes/anchors in an entire row of grids.
         
         xgrid, carryforward = divmod(flattened_index, num_boxes_in_a_row)
-        ygrid, anchor_index = divmod(carryforward, num_of_anchor)
+        ygrid, anchor_index = divmod(carryforward, self.num_of_anchor)
         
         return xgrid,ygrid,anchor_index
             
