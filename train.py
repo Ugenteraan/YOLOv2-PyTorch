@@ -8,11 +8,11 @@ from yolo_net import yolo, optimizer, loss, lr_decay #decay rate update
 from tqdm import tqdm
 from mAP import mAP
 
-training_data = Load_Dataset(resized_image_size=320, transform=ToTensor())
+training_data = Load_Dataset(resized_image_size=416, transform=ToTensor())
 
-dataloader = DataLoader(training_data, batch_size=20, shuffle=False, num_workers=4)
+dataloader = DataLoader(training_data, batch_size=1, shuffle=False, num_workers=4)
 
-mAP_object = mAP(box_num_per_grid=cfg.k, feature_size=10, topN_pred=5, anchors_list=training_data.anchors_list)
+mAP_object = mAP(box_num_per_grid=cfg.k, feature_size=13, topN_pred=5, anchors_list=training_data.anchors_list)
 
 
 print(yolo)
