@@ -78,13 +78,10 @@ class mAP:
             c) 
 
         '''
-        
-        
+      
         AP = []
         for class_index in range(self.num_class):
-            
-            
-            
+                     
             precision_list, recall_list = [], []
             
             true_positive  = 0
@@ -229,7 +226,7 @@ class mAP:
                 
                 curr_recall = recall_list[recall_index]
                 next_recall = recall_list[recall_index + 1]
-                ip = interpolated_precision[recall_index]
+                ip = interpolated_precision[recall_index + 1]
             
                 current_summation = (next_recall - curr_recall)*(ip)
                 Avg_precision += current_summation
