@@ -80,10 +80,10 @@ class mAP:
         '''
         
         
-        
+        AP = []
         for class_index in range(self.num_class):
             
-            AP = []
+            
             
             precision_list, recall_list = [], []
             
@@ -234,7 +234,7 @@ class mAP:
                 current_summation = (next_recall - curr_recall)*(ip)
                 Avg_precision += current_summation
             
-            AP = Avg_precision
+            AP.append(Avg_precision)
         
         #average all the AP
         mean_AvgPrecision = np.mean(np.asarray(AP, dtype=np.float32))
