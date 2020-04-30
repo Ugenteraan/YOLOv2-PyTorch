@@ -10,7 +10,7 @@ from mAP import mAP
 
 training_data = Load_Dataset(resized_image_size=416, transform=ToTensor())
 
-dataloader = DataLoader(training_data, batch_size=1, shuffle=False, num_workers=4)
+dataloader = DataLoader(training_data, batch_size=30, shuffle=True, num_workers=4)
 
 mAP_object = mAP(box_num_per_grid=cfg.k, feature_size=13, topN_pred=5, anchors_list=training_data.anchors_list)
 
@@ -38,7 +38,7 @@ for epoch_idx in range(cfg.total_epoch):
         training_loss.append(total_loss.item())
         total_loss.backward()
         optimizer.step()
-        break
+        
     
     lr_decay.step() #decay rate update
         # print(total_loss.item())
