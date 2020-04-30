@@ -79,9 +79,11 @@ class mAP:
 
         '''
         
-        AP = []
+        
         
         for class_index in range(self.num_class):
+            
+            AP = []
             
             precision_list, recall_list = [], []
             
