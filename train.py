@@ -4,13 +4,13 @@ from torch.utils.data import DataLoader
 import cv2
 from label_format import calculate_ground_truth
 import numpy as np
-from yolo_net import yolo, optimizer, loss
+from yolo_net import yolo, optimizer, loss, lr_decay #decay rate update
 from tqdm import tqdm
 from mAP import mAP
 
 training_data = Load_Dataset(resized_image_size=320, transform=ToTensor())
 
-dataloader = DataLoader(training_data, batch_size=2, shuffle=False, num_workers=4)
+dataloader = DataLoader(training_data, batch_size=20, shuffle=False, num_workers=4)
 
 mAP_object = mAP(box_num_per_grid=cfg.k, feature_size=10, topN_pred=5, anchors_list=training_data.anchors_list)
 
@@ -34,14 +34,16 @@ for epoch_idx in range(cfg.total_epoch):
         outputs = yolo(batch_x) #THE OUTPUTS ARE NOT YET GONE THROUGH THE ACTIVATION FUNCTIONS.
         
         total_loss = loss(predicted_array= outputs, label_array=batch_y)
-        mean_AP = mAP_object.calculate_meanAP(predicted_boxes=outputs.detach().cpu().numpy(), gt_boxes=batch_y.cpu().numpy())
+        mAP_object._collect(predicted_boxes=outputs.detach().cpu().numpy(), gt_boxes=batch_y.cpu().numpy())
         training_loss.append(total_loss.item())
         total_loss.backward()
         optimizer.step()
         break
-        
-        # print(total_loss.item())
     
+    lr_decay.step() #decay rate update
+        # print(total_loss.item())
+    meanAP = mAP_object.calculate_meanAP()
+    print("MEAN Avg Prec : ", meanAP)
     training_loss = np.average(training_loss)
     print("Epoch %d, \t Loss : %g"%(epoch_idx, training_loss))
     
