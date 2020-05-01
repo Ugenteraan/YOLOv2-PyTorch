@@ -39,30 +39,30 @@ for epoch_idx in range(cfg.total_epoch):
         total_loss.backward()
         optimizer.step()                  
         
-        img_ = np.asarray(np.transpose(batch_x.cpu().numpy()[0], (1,2,0)))
-        img = cv2.cvtColor(img_, cv2.COLOR_BGR2RGB)
+        # img_ = np.asarray(np.transpose(batch_x.cpu().numpy()[0], (1,2,0)))
+        # img = cv2.cvtColor(img_, cv2.COLOR_BGR2RGB)
         
-        calculated_batch = calculate_ground_truth(subsampled_ratio=32, anchors_list=training_data.anchors_list, resized_image_size=320, 
-                            network_prediction=outputs.detach().cpu().numpy(), prob_threshold=0.99)
+        # calculated_batch = calculate_ground_truth(subsampled_ratio=32, anchors_list=training_data.anchors_list, resized_image_size=320, 
+        #                     network_prediction=outputs.detach().cpu().numpy(), prob_threshold=0.99)
         
         
-        # print("CLASS : " , calculated_batch[0])
-        for k in range(calculated_batch.shape[1]):
-            # print(int(calculated_batch[0][k][0]), int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2]), int(calculated_batch[0][k][3]))
-            # try:
+        # # print("CLASS : " , calculated_batch[0])
+        # for k in range(calculated_batch.shape[1]):
+        #     # print(int(calculated_batch[0][k][0]), int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2]), int(calculated_batch[0][k][3]))
+        #     # try:
             
-            cv2.putText(img, (str(round(calculated_batch[0][k][0],4))+", "+ str(cfg.classes[int(calculated_batch[0][k][5])])), (int(calculated_batch[0][k][1]), 
-                                                                                  int(calculated_batch[0][k][2])-8), cv2.FONT_HERSHEY_SIMPLEX, 
-                                                                                                                                    0.4, (36,255,12), 2)
-            cv2.rectangle(img, (int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2])), (int(calculated_batch[0][k][3]), int(calculated_batch[0][k][4])),
-                        (0,255,0), 1)
-            # except Exception as e:
-            #     print(e)
-            #     pass
+        #     cv2.putText(img, (str(round(calculated_batch[0][k][0],4))+", "+ str(cfg.classes[int(calculated_batch[0][k][5])])), (int(calculated_batch[0][k][1]), 
+        #                                                                           int(calculated_batch[0][k][2])-8), cv2.FONT_HERSHEY_SIMPLEX, 
+        #                                                                                                                             0.4, (36,255,12), 2)
+        #     cv2.rectangle(img, (int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2])), (int(calculated_batch[0][k][3]), int(calculated_batch[0][k][4])),
+        #                 (0,255,0), 1)
+        #     # except Exception as e:
+        #     #     print(e)
+        #     #     pass
             
-        cv2.imshow("img", img)
-        cv2.waitKey(0)
-        break  
+        # cv2.imshow("img", img)
+        # cv2.waitKey(0)
+        # break  
         
     
     lr_decay.step() #decay rate update
