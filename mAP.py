@@ -236,6 +236,10 @@ class mAP:
         #average all the AP
         mean_AvgPrecision = np.mean(np.asarray(AP, dtype=np.float32))
         
+        #clear the lists
+        self.epoch_predboxes = []
+        self.epoch_gtBoxes = []
+        
         return mean_AvgPrecision
             
 
