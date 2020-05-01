@@ -27,7 +27,7 @@ for epoch_idx in range(cfg.total_epoch):
         chosen_image_index = randint(0,10)
     
     chosen_image_size = cfg.image_sizes[chosen_image_index]
-    feature_size = chosen_image_size/cfg.subsampled_ratio
+    feature_size = int(chosen_image_size/cfg.subsampled_ratio)
     
     training_data = Load_Dataset(resized_image_size=chosen_image_size, transform=ToTensor())
 
