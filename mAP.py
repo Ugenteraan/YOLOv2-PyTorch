@@ -146,7 +146,7 @@ class mAP:
                     #get the IoU between the predicted box and ALL the ground truth boxes in an image that belongs to this class index.
                     iou_array = self.calculate_iou(predicted_box = np.asarray(each_pred_box, dtype=np.float32), 
                                                    gt_boxes = np.asarray(classed_gt_boxes, dtype=np.float32))
-                    print(iou_array)
+                    
                     highest_iou_index = np.argmax(iou_array) #get the index of the gt box that has the highest IoU with the selected pred box.
                     
                     if iou_array[highest_iou_index] < self.iou_thresh:
@@ -186,7 +186,7 @@ class mAP:
                     
                     #if the prediction box is not a TP
                     #these are duplicate prediction boxes.
-                    print([int(j[0]) for j in TP_anchor_boxes])
+                    
                     if not i in [int(j[0]) for j in TP_anchor_boxes]:
                         
                         false_positive += 1
