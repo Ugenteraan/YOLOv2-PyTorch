@@ -7,20 +7,31 @@ import numpy as np
 from yolo_net import yolo, optimizer, loss, lr_decay #decay rate update
 from tqdm import tqdm
 from mAP import mAP
+from random import randint
 
-training_data = Load_Dataset(resized_image_size=320, transform=ToTensor())
-
-dataloader = DataLoader(training_data, batch_size=1, shuffle=False, num_workers=4)
-
-mAP_object = mAP(box_num_per_grid=cfg.k, feature_size=10, topN_pred=5, anchors_list=training_data.anchors_list)
 
 
 print(yolo)
+chosen_image_index = 0
 
 for epoch_idx in range(cfg.total_epoch):
     
     epoch_loss = 0
     training_loss = []
+    
+    
+    if epoch_idx % 10 == 0:
+        
+        chosen_image_index = randint(0,10)
+    
+    chosen_image_size = cfg.image_sizes[chosen_image_index]
+    feature_size = chosen_image_size/cfg.subsampled_ratio
+    
+    training_data = Load_Dataset(resized_image_size=chosen_image_size, transform=ToTensor())
+
+    dataloader = DataLoader(training_data, batch_size=cfg.batch_size, shuffle=True, num_workers=4)
+
+    mAP_object = mAP(box_num_per_grid=cfg.k, feature_size=feature_size, topN_pred=cfg.mAP_topN, anchors_list=training_data.anchors_list)
 
     for i, sample in tqdm(enumerate(dataloader)):
         # print(sample["image"].shape)

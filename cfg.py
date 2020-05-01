@@ -18,6 +18,7 @@ total_epoch = 100
 mAP_topN = 5
 mAP_iou_thresh = 0.2
 confidence_thresh = 0.6
+batch_size = 30
 
 #Get the image and annotation file paths
 list_images      = sorted([x for x in glob.glob(data_images_path + '/**')])     #length : 17125
