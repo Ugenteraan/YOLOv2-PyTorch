@@ -82,7 +82,7 @@ class mAP:
         AP = []
         for class_index in range(self.num_class):
                      
-            precision_list, recall_list = [], []
+            precision_list, recall_list = [0], [0]
             
             true_positive  = 0
             false_positive = 0
@@ -100,7 +100,6 @@ class mAP:
                     
                     #check if the pred box predicted the class we're calculating the AP for.
                     if int(pred_box[5]) == class_index and pred_box[0] > self.confidence_thresh:
-                        
                         classed_pred_boxes.append(pred_box)
                         det_counter += 1
                 
@@ -108,7 +107,6 @@ class mAP:
                     
                     #check if the gt box predicted belongs to the class we're calculating the AP for.
                     if int(gt_box[5]) == class_index:
-                        
                         classed_gt_boxes.append(gt_box)
                         gt_counter += 1
                 
@@ -148,9 +146,11 @@ class mAP:
                     #get the IoU between the predicted box and ALL the ground truth boxes in an image that belongs to this class index.
                     iou_array = self.calculate_iou(predicted_box = np.asarray(each_pred_box, dtype=np.float32), 
                                                    gt_boxes = np.asarray(classed_gt_boxes, dtype=np.float32))
-                    
+                    print(iou_array)
                     highest_iou_index = np.argmax(iou_array) #get the index of the gt box that has the highest IoU with the selected pred box.
                     
+                    if iou_array[highest_iou_index] < self.iou_thresh:
+                        continue
                     
                     try :
                         _ = IoU_mark[highest_iou_index]
@@ -165,6 +165,7 @@ class mAP:
                 #sort the prediction boxes that belongs to a gt box in decreasing order.
                 total_pred_boxes = 0 # to keep track of the prediction boxes that passed the confidence threshold above.
                 TP_anchor_boxes = []
+                
                 for key in IoU_mark:
                     
                     #convert the list in the value to np array
@@ -178,13 +179,15 @@ class mAP:
                     TP_anchor_boxes.append(highest_pred_elem) #append each of the prediction boxes with the highest IoU to a particular Gt box.
                     
                     total_pred_boxes += len(IoU_mark[key]) #total up the number of prediction boxes.
-                    
+                
+                
                 #iterate through the predicted boxes to determine TP and FP and calculate precision and recall.
                 for i in range(total_pred_boxes):
                     
                     #if the prediction box is not a TP
                     #these are duplicate prediction boxes.
-                    if not i in [j[0] for j in TP_anchor_boxes]:
+                    print([int(j[0]) for j in TP_anchor_boxes])
+                    if not i in [int(j[0]) for j in TP_anchor_boxes]:
                         
                         false_positive += 1
                         
@@ -226,11 +229,13 @@ class mAP:
                 
                 curr_recall = recall_list[recall_index]
                 next_recall = recall_list[recall_index + 1]
+                
                 ip = interpolated_precision[recall_index + 1]
+                
             
                 current_summation = (next_recall - curr_recall)*(ip)
                 Avg_precision += current_summation
-            
+                
             AP.append(Avg_precision)
         
         #average all the AP

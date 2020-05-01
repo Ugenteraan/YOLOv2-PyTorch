@@ -15,7 +15,7 @@ lambda_noobj = 0.5
 epsilon_value = 1e-8
 total_epoch = 100
 mAP_topN = 5
-mAP_iou_thresh = 0.4
+mAP_iou_thresh = 0.2
 confidence_thresh = 0.6
 
 #Get the image and annotation file paths
@@ -25,5 +25,6 @@ total_images = len(list_images)
 
 classes = get_classes(xml_files=list_annotations)
 num_of_class = len(classes)
+print(classes)
 excluded_classes = [] #if you'd like to exclude certain classes for training.
 
