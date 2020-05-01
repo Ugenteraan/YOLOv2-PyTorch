@@ -1,5 +1,6 @@
 from load_data import Load_Dataset, ToTensor
 import cfg
+import torch
 from torch.utils.data import DataLoader
 import cv2
 from label_format import calculate_ground_truth
@@ -13,6 +14,7 @@ from random import randint
 
 print(yolo)
 chosen_image_index = 0
+highest_map = 0
 
 for epoch_idx in range(cfg.total_epoch):
     
@@ -83,7 +85,9 @@ for epoch_idx in range(cfg.total_epoch):
     training_loss = np.average(training_loss)
     print("Epoch %d, \t Loss : %g"%(epoch_idx, training_loss))
     
-    
+    if meanAP > highest_map:
+        highest_map = meanAP
+        torch.save(yolo.state_dict(), './yolo_model.pth')
         
     
     
