@@ -70,17 +70,18 @@ class YOLOv2(NN.Module):
         '''
         Apply activation functions on the predicted confidence and centers.
         '''
-        placeholder_tensor = torch.zeros_like(prediction)
-        predicted_confidence = NN.Sigmoid()(prediction[:,:,:,:,0:1])
-        predicted_centerX = NN.Sigmoid()(prediction[:,:,:,:,1:2])
-        predicted_centerY = NN.Sigmoid()(prediction[:,:,:,:,2:3])
+        # placeholder_tensor = torch.zeros_like(prediction)
+        # predicted_confidence = NN.Sigmoid()(prediction[:,:,:,:,0:1])
+        # predicted_centerX = NN.Sigmoid()(prediction[:,:,:,:,1:2])
+        # predicted_centerY = NN.Sigmoid()(prediction[:,:,:,:,2:3])
         
-        placeholder_tensor[:,:,:,:,0:1] = predicted_confidence
-        placeholder_tensor[:,:,:,:,1:2] = predicted_centerX
-        placeholder_tensor[:,:,:,:,2:3] = predicted_centerY
-        placeholder_tensor[:,:,:,:,3:] = prediction[:,:,:,:,3:]
+        # placeholder_tensor[:,:,:,:,0:1] = predicted_confidence
+        # placeholder_tensor[:,:,:,:,1:2] = predicted_centerX
+        # placeholder_tensor[:,:,:,:,2:3] = predicted_centerY
+        # placeholder_tensor[:,:,:,:,3:] = prediction[:,:,:,:,3:]
+        prediction[:,:,:,:,0:3] = NN.Sigmoid()(prediction[:,:,:,:,0:3])
         
-        return placeholder_tensor
+        return prediction
         
         
     
@@ -128,8 +129,8 @@ def loss(predicted_array, label_array):
     
     #actual size loss according to YOLO 1 loss function. But I don't think square root would work since the ground truth values
     #can have negative values.
-    # size_loss = cfg.lambda_coord * gt_objectness * ((torch.sqrt(predicted_width + cfg.epsilon_value) - torch.sqrt(gt_width)**2 + 
-    #                                                 (torch.sqrt(predicted_height + cfg.epsilon_value) - torch.sqrt(gt_height)**2)
+    # size_loss = cfg.lambda_coord * torch.sum(gt_objectness * ((torch.sqrt(predicted_width + cfg.epsilon_value) - torch.sqrt(gt_width)**2 + 
+    #                                                 (torch.sqrt(predicted_height + cfg.epsilon_value) - torch.sqrt(gt_height)**2))))
     
     #mean square size loss without the square roots.
     size_loss = cfg.lambda_coord * torch.sum(gt_objectness * ((predicted_width  - gt_width)**2 + (predicted_height - gt_height)**2))
@@ -163,7 +164,7 @@ def loss(predicted_array, label_array):
 yolo = YOLOv2(k=cfg.k, num_classes=cfg.num_of_class, init_weights=True)
 
 optimizer = Adam(yolo.parameters(), lr = cfg.learning_rate)
-lr_decay = lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+lr_decay = lr_scheduler.ExponentialLR(optimizer, gamma=0.98)
 
 
 if torch.cuda.is_available():

@@ -122,7 +122,7 @@ def label_formatting(gt_class_labels, gt_boxes, anchors_list, subsampled_ratio, 
         tw = math.log(gt_box_width/chosen_anchor[3])
         th = math.log(gt_box_height/chosen_anchor[4])
 
-        #objectness probability + regression values
+        #objectness probability + regression values + class index
         label_values = np.asarray([1.0, sigmoid_tx, sigmoid_ty, tw, th, class_label_index], dtype=np.float32)
 
         #We need to occupy the probability of objnectness and the regression values in the chosen anchor's index.
@@ -146,6 +146,7 @@ def calculate_ground_truth(subsampled_ratio, anchors_list, resized_image_size, n
     network_prediction[boolean_array] = 0 
 
     entire_batch_transformed_values = []
+    entire_anchor = []
 
     for i in range(predicted_data_num): #loop through every item in the batch.
 
@@ -156,6 +157,7 @@ def calculate_ground_truth(subsampled_ratio, anchors_list, resized_image_size, n
         num_of_occupied_arrays = occupied_array_indexes[0].shape[0]
 
         transformed_values = [] #to hold the transformed values (from predicted regressions into ground truth boxes)
+        anchor_values = []
 
         for j in range(num_of_occupied_arrays): #loop through every occupied anchors in a particular batch index.
 
@@ -163,6 +165,8 @@ def calculate_ground_truth(subsampled_ratio, anchors_list, resized_image_size, n
             gridY = occupied_array_indexes[1][j] #responsible Y-grid.
             anchor_index = occupied_array_indexes[2][j] #responsible anchor index.
 
+            #get the prediction confidence.
+            pred_confidence = predicted_arrays[gridX][gridY][anchor_index][0]
             #center coordinates of the predicted box.
             center_x = (predicted_arrays[gridX][gridY][anchor_index][1]*subsampled_ratio) + (gridX*subsampled_ratio)
             center_y = (predicted_arrays[gridX][gridY][anchor_index][2]*subsampled_ratio) + (gridY*subsampled_ratio)
@@ -174,11 +178,23 @@ def calculate_ground_truth(subsampled_ratio, anchors_list, resized_image_size, n
             y1 = center_y - height/2
             x2 = center_x + width/2
             y2 = center_y + height/2
+            
+            class_index = np.argmax(predicted_arrays[gridX][gridY][anchor_index][5:])
 
-            transformed_values.append([x1,y1,x2,y2])
+            transformed_values.append([pred_confidence,x1,y1,x2,y2, class_index])
+            
+            #get the responsible anchor and transform the values.
+            res_anchor = anchors_list[gridX][gridY][anchor_index]
+            anchor_x1 = res_anchor[1] - res_anchor[3]/2
+            anchor_y1 = res_anchor[2] - res_anchor[4]/2
+            anchor_x2 = res_anchor[1] + res_anchor[3]/2
+            anchor_y2 = res_anchor[2] + res_anchor[4]/2
+            anchor_values.append([anchor_x1, anchor_y1, anchor_x2, anchor_y2])
         
         entire_batch_transformed_values.append(transformed_values)
+        entire_anchor.append(anchor_values)
     
+    # return np.asarray(entire_anchor, dtype=np.float32)
     return np.asarray(entire_batch_transformed_values, dtype=np.float32)
 
 
