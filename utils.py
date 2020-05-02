@@ -158,7 +158,7 @@ def cluster_bounding_boxes( k, total_images, resized_image_size, list_annotation
     
     kmeans = K_Means(k=k, boxes=gt_boxes_array)
     anchor_sizes = kmeans()
-    anchor_sizes = np.asarray(anchor_sizes, dtype=np.float32)
+    anchor_sizes = np.asarray(anchor_sizes, dtype=np.int32) #convert to integer
     
     #k anchors
     return anchor_sizes

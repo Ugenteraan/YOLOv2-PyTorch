@@ -50,7 +50,7 @@ for epoch_idx in range(cfg.total_epoch):
         mAP_object._collect(predicted_boxes=outputs.detach().cpu().numpy(), gt_boxes=batch_y.cpu().numpy())
         training_loss.append(total_loss.item())
         total_loss.backward()
-        optimizer.step()                  
+        optimizer.step()                 
         
         # img_ = np.asarray(np.transpose(batch_x.cpu().numpy()[0], (1,2,0)))
         # img = cv2.cvtColor(img_, cv2.COLOR_BGR2RGB)
@@ -79,7 +79,7 @@ for epoch_idx in range(cfg.total_epoch):
         
     
     lr_decay.step() #decay rate update
-        # print(total_loss.item())
+    # print(total_loss.item())
     meanAP = mAP_object.calculate_meanAP()
     print("MEAN Avg Prec : ", meanAP)
     training_loss = np.average(training_loss)
