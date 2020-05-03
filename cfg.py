@@ -1,5 +1,13 @@
 import glob
-from utils import get_classes
+from utils import get_classes, ImgNet_get_classes, ImgNet_check_model
+
+###IMAGENET config
+ImgNet_dataset_path = '../ImageNet'
+ImgNet_classes = ImgNet_get_classes(folder_path=ImgNet_dataset_path)
+ImgNet_num_of_class = len(ImgNet_classes)
+ImgNet_model_save_path = './imagenet_model/imagenet.pth'
+ImgNet_model_presence = ImgNet_check_model(model_path = ImgNet_model_save_path)
+###
 
 data_images_path     = '../VOCdevkit/VOC2012/JPEGImages'
 data_annotation_path = '../VOCdevkit/VOC2012/Annotations'

@@ -51,9 +51,9 @@ class YOLOv2(NN.Module):
                     padding_value = 0
                 conv2d = NN.Conv2d(in_channels, l[1], kernel_size=l[0], padding=padding_value)
 
-                #for the last convolution layer. No activation function.
+                #for the last convolution layer. No activation function. No Batch Norm.
                 if l[1] == k*(num_classes+5):
-                    layers += [conv2d, NN.BatchNorm2d(num_features=l[1])]
+                    layers += [conv2d]
                     break
 
                 layers += [conv2d, NN.BatchNorm2d(num_features=l[1]), NN.LeakyReLU(inplace=True)]
@@ -70,15 +70,7 @@ class YOLOv2(NN.Module):
         '''
         Apply activation functions on the predicted confidence and centers.
         '''
-        # placeholder_tensor = torch.zeros_like(prediction)
-        # predicted_confidence = NN.Sigmoid()(prediction[:,:,:,:,0:1])
-        # predicted_centerX = NN.Sigmoid()(prediction[:,:,:,:,1:2])
-        # predicted_centerY = NN.Sigmoid()(prediction[:,:,:,:,2:3])
         
-        # placeholder_tensor[:,:,:,:,0:1] = predicted_confidence
-        # placeholder_tensor[:,:,:,:,1:2] = predicted_centerX
-        # placeholder_tensor[:,:,:,:,2:3] = predicted_centerY
-        # placeholder_tensor[:,:,:,:,3:] = prediction[:,:,:,:,3:]
         prediction[:,:,:,:,0:3] = NN.Sigmoid()(prediction[:,:,:,:,0:3])
         
         return prediction

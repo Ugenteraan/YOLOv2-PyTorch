@@ -22,6 +22,7 @@ class K_Means:
     def process_boxes(self, boxes):
         '''
         This assumes that the boxes are normalized to their width and height, therefore all boxes will be overlapping each other.
+        We don't care about the x,y coordinates since we only want the height and width for the centroid boxes.
         '''
         new_boxes = boxes.copy()
         for row in range(self.rows):

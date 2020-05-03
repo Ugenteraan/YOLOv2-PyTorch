@@ -3,6 +3,38 @@ import numpy as np
 from K_Means import K_Means
 import cv2
 from label_format import label_formatting
+import glob
+import os.path
+
+
+
+
+def ImgNet_check_model(model_path):
+    '''
+    Checks if the ImageNet trained model is present or not.
+    '''
+    
+    if os.path.isfile(model_path):
+        return True 
+
+    return False
+
+
+def ImgNet_get_classes(folder_path):
+    '''
+    Gets all the folder names (classes) of the ImageNet dataset.
+    '''
+    class_list = []
+    for path in glob.glob(folder_path + "/**"):
+        
+        class_name = path.split('/')[-1] #the class name would be at the back of the last slash.
+        class_name = class_name.replace("'", "")
+        class_name = class_name.replace(" ", "_")
+        class_name = class_name.lower()
+        class_list.append(class_name)
+    
+    return class_list
+    
 
 def get_classes(xml_files):
     '''

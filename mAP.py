@@ -78,7 +78,7 @@ class mAP:
             c) 
 
         '''
-      
+        
         AP = []
         for class_index in range(self.num_class):
                      
