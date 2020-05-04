@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 import cv2
 from label_format import calculate_ground_truth
 import numpy as np
-from yolo_net import yolo, optimizer, loss, lr_decay #decay rate update
+# from yolo_net import yolo, optimizer, loss, lr_decay #decay rate update
 from tqdm import tqdm
 from mAP import mAP
 from random import randint
@@ -60,7 +60,7 @@ if not cfg.ImgNet_model_presence:
 
             
 
-
+'''
 print(yolo)
 chosen_image_index = 0
 highest_map = 0
@@ -152,3 +152,4 @@ for epoch_idx in range(cfg.total_epoch):
     
     # cv2.imshow("img", img)
     # cv2.waitKey(0)
+'''
