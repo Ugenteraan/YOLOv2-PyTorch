@@ -92,7 +92,7 @@ class Darknet19(NN.Module):
     
 
 
-darknet19 = Darknet19(num_classes=cfg.num_of_class, init_weights=True)
+darknet19 = Darknet19(num_classes=cfg.ImgNet_num_of_class, init_weights=True)
 
 ImgNet_optimizer = Adam(darknet19.parameters(), lr = cfg.ImgNet_learning_rate)
 ImgNet_lr_decay = lr_scheduler.ExponentialLR(ImgNet_optimizer, gamma=cfg.ImgNet_learning_rate_decay)

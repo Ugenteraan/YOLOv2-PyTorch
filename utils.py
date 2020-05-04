@@ -87,7 +87,7 @@ def ImgNet_read_data(image_path, class_idx, resized_image_size):
     '''
     
     image_array = read_image(image_path=image_path, resized_image_size=resized_image_size)
-    label_array = np.asarray(class_idx, dtype=np.float32)
+    label_array = np.asarray(class_idx, dtype=np.int32)
     
     return image_array, label_array
 
