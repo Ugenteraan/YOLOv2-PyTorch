@@ -76,6 +76,7 @@ class Darknet19(NN.Module):
         Calculates the accuracy of the predictions.
         '''
         num_data = target.size()[0]
+        network_output = torch.argmax(network_output.contiguous()).view((num_data))
         correct_predictions = torch.sum(network_output==target)
         
         accuracy = (correct_predictions*100/num_data)
