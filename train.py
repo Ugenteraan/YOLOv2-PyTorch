@@ -52,7 +52,7 @@ if not cfg.ImgNet_model_presence:
         ImgNet_lr_decay.step()
         
         current_accuracy = np.average(epoch_accuracy)
-        print("Epoch %d, \t Training Loss : %g, \t Training Accuracy : %g"%(epoch_idx, np.average(training_loss), current_accuracy))
+        print("Epoch %d, \t Training Loss : %g, \t Training Accuracy : %g"%(epoch_idx, np.average(epoch_training_loss), current_accuracy))
         
         if current_accuracy > best_accuracy:
             best_accuracy = current_accuracy
