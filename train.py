@@ -40,13 +40,13 @@ if not cfg.ImgNet_model_presence:
 
             training_loss = ImgNet_criterion(input=classification_output, target=batch_y)
             
-            epoch_training_loss.append(training_loss)
+            epoch_training_loss.append(training_loss.item())
             
             training_loss.backward()
             ImgNet_optimizer.step()
             
             batch_acc = darknet19.calculate_accuracy(network_output=classification_output, target=batch_y)
-            epoch_accuracy.append(batch_acc)
+            epoch_accuracy.append(batch_acc.item())
             
         
         ImgNet_lr_decay.step()
