@@ -10,6 +10,7 @@ ImgNet_model_presence = ImgNet_check_model(model_path = ImgNet_model_save_path)
 ImgNet_learning_rate = 1e-3
 ImgNet_learning_rate_decay = 0.9
 ImgNet_total_epoch = 160
+print(ImgNet_classes)
 ###
 
 data_images_path     = '../VOCdevkit/VOC2012/JPEGImages'
@@ -38,6 +39,5 @@ total_images = len(list_images)
 
 classes = get_classes(xml_files=list_annotations)
 num_of_class = len(classes)
-print(classes)
 excluded_classes = [] #if you'd like to exclude certain classes for training.
 
