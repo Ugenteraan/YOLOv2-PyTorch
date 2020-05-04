@@ -32,7 +32,7 @@ if not cfg.ImgNet_model_presence:
     
         for i, sample in tqdm(enumerate(ImgNet_dataloader)):
             
-            batch_x, batch_y = sample["image"].cuda(), sample["label"].cuda()
+            batch_x, batch_y = sample["image"].cuda(), sample["label"].type(torch.long).cuda()
             
             ImgNet_optimizer.zero_grad()
             
