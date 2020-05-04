@@ -9,7 +9,18 @@ from yolo_net import yolo, optimizer, loss, lr_decay #decay rate update
 from tqdm import tqdm
 from mAP import mAP
 from random import randint
+from utils import ImgNet_generate_data
 
+
+x,y = ImgNet_generate_data(folder_path=cfg.ImgNet_dataset_path, class_list=cfg.ImgNet_classes)
+print(x,y)
+
+if not cfg.ImgNet_model_presence:
+    '''
+    If the classification model is not present, then we'll have to train the model with the ImageNet images for classification.
+    '''
+    pass
+    
 
 
 print(yolo)

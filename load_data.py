@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import Dataset
 from torchvision import transforms, utils
 import cfg
-from utils import cluster_bounding_boxes, generate_anchors, generate_training_data
+from utils import cluster_bounding_boxes, generate_anchors, generate_training_data, ImgNet_generate_data
 
 
 
@@ -86,3 +86,6 @@ class Load_Dataset(Dataset):
             sample = self.transform(sample)
         
         return sample
+    
+    
+

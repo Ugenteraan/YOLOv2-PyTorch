@@ -20,6 +20,18 @@ def ImgNet_check_model(model_path):
     return False
 
 
+def ImgNet_process_classname(classname):
+    '''
+    Process the given string.
+    '''
+    
+    processed_str = classname.replace("'","")
+    processed_str = processed_str.replace(" ", "_")
+    processed_str = processed_str.lower()
+    
+    return processed_str
+    
+
 def ImgNet_get_classes(folder_path):
     '''
     Gets all the folder names (classes) of the ImageNet dataset.
@@ -28,13 +40,37 @@ def ImgNet_get_classes(folder_path):
     for path in glob.glob(folder_path + "/**"):
         
         class_name = path.split('/')[-1] #the class name would be at the back of the last slash.
-        class_name = class_name.replace("'", "")
-        class_name = class_name.replace(" ", "_")
-        class_name = class_name.lower()
+        class_name = ImgNet_process_classname(classname = class_name)
         class_list.append(class_name)
     
-    return class_list
+    return sorted(class_list)
+
+
+def ImgNet_generate_data(folder_path, class_list):
+    '''
+    Build a list of image data and corresponding label.
+    '''
     
+    images_list = []
+    labels_list = []
+    
+    for path in glob.glob(folder_path + "/**", recursive=True):
+        
+        if path[-3:] == 'jpg':
+            images_list.append(path)
+        
+            classname = path.split('/')[-2]
+            classname = ImgNet_process_classname(classname=classname)
+            class_index = class_list.index(classname)
+            
+            labels_list.append(class_index)
+    
+    return images_list, labels_list
+
+
+
+
+
 
 def get_classes(xml_files):
     '''

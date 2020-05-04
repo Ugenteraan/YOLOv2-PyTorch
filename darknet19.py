@@ -58,7 +58,8 @@ class Darknet19(NN.Module):
 
                 #for the last convolution layer. No activation function.
                 if l[1] == self.num_classes:
-                    layers += [conv2d]
+                    #AdaptiveMaxPool infers the input size parameters on its own whereas MaxPool requires us to supply the input parameters.
+                    layers += [conv2d, NN.AdaptiveMaxPool1d(output_size = self.num_classes)]
                     break
 
                 layers += [conv2d, NN.BatchNorm2d(num_features=l[1]), NN.LeakyReLU(inplace=True)]
@@ -80,3 +81,11 @@ class Darknet19(NN.Module):
         output = NN.Softmax(x)
    
         return output
+    
+    
+
+def ImgNet_loss():
+    '''
+    Calculate loss for the classification task.
+    '''
+    pass
