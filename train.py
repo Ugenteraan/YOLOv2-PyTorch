@@ -1,4 +1,4 @@
-from load_data import Load_Dataset, ToTensor
+from load_data import Load_Dataset, ToTensor, ImgNet_loadDataset
 import cfg
 import torch
 from torch.utils.data import DataLoader
@@ -9,18 +9,56 @@ from yolo_net import yolo, optimizer, loss, lr_decay #decay rate update
 from tqdm import tqdm
 from mAP import mAP
 from random import randint
-from utils import ImgNet_generate_data
+from darknet19 import darknet19, ImgNet_optimizer, ImgNet_lr_decay, ImgNet_criterion
 
 
-x,y = ImgNet_generate_data(folder_path=cfg.ImgNet_dataset_path, class_list=cfg.ImgNet_classes)
-print(x,y)
 
 if not cfg.ImgNet_model_presence:
     '''
     If the classification model is not present, then we'll have to train the model with the ImageNet images for classification.
     '''
-    pass
+    print(darknet19)
     
+    ImgNet_training_data = ImgNet_loadDataset(resized_image_size=224, class_list=cfg.ImgNet_classes, dataset_folder_path=cfg.dataset_folder_path,
+                                       transform=ToTensor())
+    
+    ImgNet_dataloader = DataLoader(ImgNet_training_data, batch_size=cfg.batch_size, shuffle=True, num_workers=4)
+    
+    best_accuracy = 0
+    for epoch_idx in range(cfg.ImgNet_total_epoch):
+        
+        epoch_training_loss = []
+        epoch_accuracy = []
+    
+        for i, sample in tqdm(enumerate(ImgNet_dataloader)):
+            
+            batch_x, batch_y = sample["image"].cuda(), sample["label"].cuda()
+            
+            ImgNet_optimizer.zero_grad()
+            
+            classification_output = darknet19(batch_x)
+
+            training_loss = ImgNet_criterion(input=classification_output, target=batch_y)
+            
+            epoch_training_loss.append(training_loss)
+            
+            training_loss.backward()
+            ImgNet_optimizer.step()
+            
+            batch_acc = darknet19.calculate_accuracy(network_output=classification_output, target=batch_y)
+            epoch_accuracy.append(batch_acc)
+            
+        
+        ImgNet_lr_decay.step()
+        
+        current_accuracy = np.average(epoch_accuracy)
+        print("Epoch %d, \t Training Loss : %g, \t Training Accuracy : %g"%(epoch_idx, np.average(training_loss), current_accuracy))
+        
+        if current_accuracy > best_accuracy:
+            best_accuracy = current_accuracy
+            torch.save(darknet19.state_dict(), cfg.ImgNet_model_save_path)
+
+            
 
 
 print(yolo)
@@ -34,8 +72,8 @@ for epoch_idx in range(cfg.total_epoch):
     
     
     if epoch_idx % 10 == 0:
-        
-        chosen_image_index = randint(0,10)
+        #there are 10 options for image sizes.
+        chosen_image_index = randint(0,9)
     
     chosen_image_size = cfg.image_sizes[chosen_image_index]
     feature_size = int(chosen_image_size/cfg.subsampled_ratio)

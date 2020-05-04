@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import Dataset
 from torchvision import transforms, utils
 import cfg
-from utils import cluster_bounding_boxes, generate_anchors, generate_training_data, ImgNet_generate_data
+from utils import cluster_bounding_boxes, generate_anchors, generate_training_data, ImgNet_generate_data, ImgNet_read_data
 
 
 
@@ -69,7 +69,7 @@ class Load_Dataset(Dataset):
     
     def __getitem__(self, idx):
         '''
-        Abstract method. Returns the label for a single input with the index of `idx`.
+        Abstract method. Returns the image and label for a single input with the index of `idx`.
         '''
         
         if torch.is_tensor(idx):
@@ -88,4 +88,49 @@ class Load_Dataset(Dataset):
         return sample
     
     
-
+class ImgNet_loadDataset(Dataset):
+    '''
+     Wraps the loading of the ImageNet dataset in PyTorch's DataLoader module.
+    '''
+    
+    def __init__(self, resized_image_size, class_list, dataset_folder_path, transform=None):
+        '''
+        Initialize parameters and generate the images path list and corresponding labels.
+        '''
+        
+        self.resized_image_size     = resized_image_size
+        self.class_list             = class_list
+        self.dataset_folder_path    = dataset_folder_path
+        self.transform              = transform
+        
+        self.images_pathList, self.labels_list = ImgNet_generate_data(folder_path=self.dataset_folder_path, 
+                                                                      class_list=self.class_list)
+        
+    
+    def __len__(self):
+        '''
+        Returns the number of data in the list.
+        '''
+        
+        return len(self.images_pathList)
+    
+    def __getitem__(self, idx):
+        '''
+        Read one single data.
+        '''
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        
+        image_array, label_array = ImgNet_read_data(image_path=self.images_pathList[idx], class_idx=self.labels_list[idx],
+                                                                                    resized_image_size=self.resized_image_size)
+        
+        sample = {
+            'image':image_array,
+            'label':label_array
+        }
+        
+        if self.transform:
+            sample = self.transform(sample)
+        
+        
+        return sample

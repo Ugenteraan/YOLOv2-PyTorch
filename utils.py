@@ -9,6 +9,19 @@ import os.path
 
 
 
+def read_image(image_path, resized_image_size):
+    '''
+    Read a single image from the given index into a numpy array.
+    '''
+
+    im_ = cv2.imread(image_path)
+    im_ = cv2.cvtColor(im_, cv2.COLOR_BGR2RGB)
+    im_ = cv2.resize(im_, (resized_image_size, resized_image_size))
+    img = im_/255 #normalize image
+
+    return np.asarray(img, dtype=np.float32)
+
+
 def ImgNet_check_model(model_path):
     '''
     Checks if the ImageNet trained model is present or not.
@@ -68,6 +81,15 @@ def ImgNet_generate_data(folder_path, class_list):
     return images_list, labels_list
 
 
+def ImgNet_read_data(image_path, class_idx, resized_image_size):
+    '''
+    Reads a single image and the corresponding label and wraps them in a numpy array.
+    '''
+    
+    image_array = read_image(image_path=image_path, resized_image_size=resized_image_size)
+    label_array = np.asarray(class_idx, dtype=np.float32)
+    
+    return image_array, label_array
 
 
 
@@ -270,17 +292,6 @@ def generate_anchors(anchor_sizes, detection_conv_size, subsampled_ratio, resize
     
     return anchors_list
 
-def read_image(image_path, resized_image_size):
-    '''
-    Read a single image from the given index into a numpy array.
-    '''
-
-    im_ = cv2.imread(image_path)
-    im_ = cv2.cvtColor(im_, cv2.COLOR_BGR2RGB)
-    im_ = cv2.resize(im_, (resized_image_size, resized_image_size))
-    img = im_/255 #normalize image
-
-    return np.asarray(img, dtype=np.float32)
 
 
 

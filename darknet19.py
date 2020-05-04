@@ -27,9 +27,8 @@ class Darknet19(NN.Module):
                 NN.init.constant_(m.weight, 1)
                 NN.init.constant_(m.bias, 0.5)
 
-    def __init__(self, k, num_classes, init_weights=True):
+    def __init__(self, num_classes, init_weights=True):
         
-        self.k = k
         self.num_classes = num_classes
 
         super(Darknet19, self).__init__()
@@ -72,20 +71,34 @@ class Darknet19(NN.Module):
             self._initialize_weights()
     
     
-
+    def calculate_accuracy(self, network_output, target):
+        '''
+        Calculates the accuracy of the predictions.
+        '''
+        num_data = target.size()[0]
+        correct_predictions = torch.sum(network_output==target)
+        
+        accuracy = (correct_predictions*100/num_data)
+        
+        return accuracy
         
     
     def forward(self, input_x):
 
         x = self.classification(input_x)
-        output = NN.Softmax(x)
    
-        return output
+        return x
     
     
 
-def ImgNet_loss():
-    '''
-    Calculate loss for the classification task.
-    '''
-    pass
+
+darknet19 = Darknet19(num_classes=cfg.num_of_class, init_weights=True)
+
+ImgNet_optimizer = Adam(darknet19.parameters(), lr = cfg.ImgNet_learning_rate)
+ImgNet_lr_decay = lr_scheduler.ExponentialLR(ImgNet_optimizer, gamma=cfg.ImgNet_learning_rate_decay)
+ImgNet_criterion = NN.CrossEntropyLoss() #cross entropy expects a raw unnormalized input (No need to softmax the output of the network)
+
+
+if torch.cuda.is_available():
+    
+    darknet19 = darknet19.cuda()
