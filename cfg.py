@@ -10,6 +10,7 @@ ImgNet_model_presence = ImgNet_check_model(model_path = ImgNet_model_save_path)
 ImgNet_learning_rate = 1e-3
 ImgNet_learning_rate_decay = 0.9
 ImgNet_total_epoch = 160
+ImgNet_batch_size = 20
 print(ImgNet_classes)
 ###
 
