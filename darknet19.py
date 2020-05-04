@@ -86,6 +86,7 @@ class Darknet19(NN.Module):
     def forward(self, input_x):
 
         x = self.classification(input_x)
+        x = x.view(-1, self.num_classes)
    
         return x
     
