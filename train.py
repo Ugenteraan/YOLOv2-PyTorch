@@ -19,7 +19,7 @@ if not cfg.ImgNet_model_presence:
     '''
     print(darknet19)
     
-    ImgNet_training_data = ImgNet_loadDataset(resized_image_size=224, class_list=cfg.ImgNet_classes, dataset_folder_path=cfg.dataset_folder_path,
+    ImgNet_training_data = ImgNet_loadDataset(resized_image_size=224, class_list=cfg.ImgNet_classes, dataset_folder_path=cfg.ImgNet_dataset_path,
                                        transform=ToTensor())
     
     ImgNet_dataloader = DataLoader(ImgNet_training_data, batch_size=cfg.batch_size, shuffle=True, num_workers=4)
