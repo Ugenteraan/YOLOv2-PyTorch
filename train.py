@@ -5,12 +5,12 @@ from torch.utils.data import DataLoader
 import cv2
 from label_format import calculate_ground_truth
 import numpy as np
-# from yolo_net import yolo, optimizer, loss, lr_decay #decay rate update
+from yolo_net import yolo, optimizer, loss, lr_decay #decay rate update
 from tqdm import tqdm
 from mAP import mAP
 from random import randint
 from darknet19 import darknet19, ImgNet_optimizer, ImgNet_lr_decay, ImgNet_criterion
-
+import itertools
 
 
 if not cfg.ImgNet_model_presence:
@@ -19,8 +19,8 @@ if not cfg.ImgNet_model_presence:
     '''
     print(darknet19)
     
-    ImgNet_training_data = ImgNet_loadDataset(resized_image_size=224, class_list=cfg.ImgNet_classes, dataset_folder_path=cfg.ImgNet_dataset_path,
-                                       transform=ToTensor())
+    ImgNet_training_data = ImgNet_loadDataset(resized_image_size=cfg.ImgNet_image_size, class_list=cfg.ImgNet_classes,
+                                              dataset_folder_path=cfg.ImgNet_dataset_path, transform=ToTensor())
     
     ImgNet_dataloader = DataLoader(ImgNet_training_data, batch_size=cfg.ImgNet_batch_size, shuffle=True, num_workers=4)
     
@@ -56,11 +56,20 @@ if not cfg.ImgNet_model_presence:
         
         if current_accuracy > best_accuracy:
             best_accuracy = current_accuracy
-            torch.save(darknet19.state_dict(), cfg.ImgNet_model_save_path)
-
+            torch.save(darknet19.state_dict(), cfg.ImgNet_model_save_path_folder + cfg.ImgNet_model_save_name)
             
 
-'''
+#Transfer Learning
+ImgNet_modelLoad = torch.load(cfg.ImgNet_model_save_path_folder + cfg.ImgNet_model_save_name)
+all_keys = ImgNet_modelLoad.keys()
+total_keys = len(all_keys)
+
+#exclude the last 2 keys (the classification layer's weight and bias)
+transfer_learning_params = dict(itertools.islice(ImgNet_modelLoad.items(), total_keys-2))
+
+yolo.load_state_dict(transfer_learning_params, strict=False)
+
+
 print(yolo)
 chosen_image_index = 0
 highest_map = 0
@@ -101,34 +110,10 @@ for epoch_idx in range(cfg.total_epoch):
         total_loss.backward()
         optimizer.step()                 
         
-        # img_ = np.asarray(np.transpose(batch_x.cpu().numpy()[0], (1,2,0)))
-        # img = cv2.cvtColor(img_, cv2.COLOR_BGR2RGB)
-        
-        # calculated_batch = calculate_ground_truth(subsampled_ratio=32, anchors_list=training_data.anchors_list, resized_image_size=320, 
-        #                     network_prediction=outputs.detach().cpu().numpy(), prob_threshold=0.99)
-        
-        
-        # # print("CLASS : " , calculated_batch[0])
-        # for k in range(calculated_batch.shape[1]):
-        #     # print(int(calculated_batch[0][k][0]), int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2]), int(calculated_batch[0][k][3]))
-        #     # try:
-            
-        #     cv2.putText(img, (str(round(calculated_batch[0][k][0],4))+", "+ str(cfg.classes[int(calculated_batch[0][k][5])])), (int(calculated_batch[0][k][1]), 
-        #                                                                           int(calculated_batch[0][k][2])-8), cv2.FONT_HERSHEY_SIMPLEX, 
-        #                                                                                                                             0.4, (36,255,12), 2)
-        #     cv2.rectangle(img, (int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2])), (int(calculated_batch[0][k][3]), int(calculated_batch[0][k][4])),
-        #                 (0,255,0), 1)
-        #     # except Exception as e:
-        #     #     print(e)
-        #     #     pass
-            
-        # cv2.imshow("img", img)
-        # cv2.waitKey(0)
-        # break  
         
     
     lr_decay.step() #decay rate update
-    # print(total_loss.item())
+
     meanAP = mAP_object.calculate_meanAP()
     print("MEAN Avg Prec : ", meanAP)
     training_loss = np.average(training_loss)
@@ -139,17 +124,37 @@ for epoch_idx in range(cfg.total_epoch):
         torch.save(yolo.state_dict(), './yolo_model.pth')
         
     
-    
 
-    # img = sample["image"].numpy()[0]
-    # print(calculated_batch.shape)
-    # calculated_batch = calculate_ground_truth(subsampled_ratio=32, anchors_list=training_data.anchors_list, resized_image_size=320, 
-                            # network_prediction=batch_y.cpu().numpy(), prob_threshold=0.85)
-    # for k in range(calculated_batch.shape[1]):
-    #     print(int(calculated_batch[0][k][0]), int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2]), int(calculated_batch[0][k][3]))
-    #     cv2.rectangle(img, (int(calculated_batch[0][k][0]), int(calculated_batch[0][k][1])), (int(calculated_batch[0][k][2]), int(calculated_batch[0][k][3])),
-    #                     (255,255,255), 2)
+
+
+
+
+
+
+
+    # img_ = np.asarray(np.transpose(batch_x.cpu().numpy()[0], (1,2,0)))
+    # img = cv2.cvtColor(img_, cv2.COLOR_BGR2RGB)
     
+    # calculated_batch = calculate_ground_truth(subsampled_ratio=32, anchors_list=training_data.anchors_list, resized_image_size=320, 
+    #                     network_prediction=outputs.detach().cpu().numpy(), prob_threshold=0.99)
+    
+    
+    # # print("CLASS : " , calculated_batch[0])
+    # for k in range(calculated_batch.shape[1]):
+    #     # print(int(calculated_batch[0][k][0]), int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2]), int(calculated_batch[0][k][3]))
+    #     # try:
+        
+    #     cv2.putText(img, (str(round(calculated_batch[0][k][0],4))+", "+ str(cfg.classes[int(calculated_batch[0][k][5])])), (int(calculated_batch[0][k][1]), 
+    #                                                                           int(calculated_batch[0][k][2])-8), cv2.FONT_HERSHEY_SIMPLEX, 
+    #                                                                                                                             0.4, (36,255,12), 2)
+    #     cv2.rectangle(img, (int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2])), (int(calculated_batch[0][k][3]), int(calculated_batch[0][k][4])),
+    #                 (0,255,0), 1)
+    #     # except Exception as e:
+    #     #     print(e)
+    #     #     pass
+        
     # cv2.imshow("img", img)
     # cv2.waitKey(0)
-'''
+    # break  
+    
+    
