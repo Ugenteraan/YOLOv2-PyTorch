@@ -74,6 +74,9 @@ print(yolo)
 chosen_image_index = 0
 highest_map = 0
 
+training_losses_list = []
+training_mAPs_list = []
+
 for epoch_idx in range(cfg.total_epoch):
     
     epoch_loss = 0
@@ -119,10 +122,21 @@ for epoch_idx in range(cfg.total_epoch):
     training_loss = np.average(training_loss)
     print("Epoch %d, \t Loss : %g"%(epoch_idx, training_loss))
     
+    training_losses_list.append(training_loss)
+    training_mAPs_list.append(meanAP)
+    
     if meanAP > highest_map:
         highest_map = meanAP
         torch.save(yolo.state_dict(), './yolo_model.pth')
-        
+
+
+ap_file = open("map.txt", 'w+')
+ap_file.write(str(training_mAPs_list))
+ap_file.close()
+
+loss_file = open("loss.txt", "w+")
+loss_file.write(str(training_losses_list))
+loss_file.close()
     
 
 
