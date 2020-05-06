@@ -11,7 +11,7 @@ from mAP import mAP
 from random import randint
 from darknet19 import darknet19, ImgNet_optimizer, ImgNet_lr_decay, ImgNet_criterion
 import itertools
-
+import os
 
 if not cfg.ImgNet_model_presence:
     '''
@@ -69,6 +69,11 @@ transfer_learning_params = dict(itertools.islice(ImgNet_modelLoad.items(), total
 
 yolo.load_state_dict(transfer_learning_params, strict=False)
 
+if os.path.exists('./yolo_model.pth'):
+    
+    yolo_params = torch.load('./yolo_model.pth')
+    yolo.load_state_dict(yolo_params)
+    print("YOLO loaded!")
 
 print(yolo)
 chosen_image_index = 0
