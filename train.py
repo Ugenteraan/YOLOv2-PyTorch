@@ -116,7 +116,7 @@ for epoch_idx in range(cfg.total_epoch):
         mAP_object._collect(predicted_boxes=outputs.detach().cpu().numpy(), gt_boxes=batch_y.cpu().numpy())
         training_loss.append(total_loss.item())
         total_loss.backward()
-        optimizer.step()                 
+        optimizer.step()                
         
         
     
