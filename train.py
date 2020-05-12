@@ -87,6 +87,8 @@ for epoch_idx in range(cfg.total_epoch):
     epoch_loss = 0
     training_loss = []
     
+    if epoch_idx % 1000 == 0 and epoch_idx != 0:
+        cfg.learning_rate = 1e-5
     
     if epoch_idx % 10 == 0:
         #there are 10 options for image sizes.

@@ -1,6 +1,6 @@
 import torch
 import torch.nn as NN
-from torch.optim import Adam, lr_scheduler
+from torch.optim import SGD, lr_scheduler
 import cfg
 
 class YOLOv2(NN.Module):
@@ -155,7 +155,7 @@ def loss(predicted_array, label_array):
     
 yolo = YOLOv2(k=cfg.k, num_classes=cfg.num_of_class, init_weights=True)
 
-optimizer = Adam(yolo.parameters(), lr = cfg.learning_rate)
+optimizer = SGD(yolo.parameters(), lr = cfg.learning_rate, momentum=0.9, weight_decay=5e-4)
 lr_decay = lr_scheduler.ExponentialLR(optimizer, gamma=cfg.learning_rate_decay)
 
 
