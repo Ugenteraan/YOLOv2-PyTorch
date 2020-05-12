@@ -88,7 +88,8 @@ for epoch_idx in range(cfg.total_epoch):
     training_loss = []
     
     if epoch_idx % 1000 == 0 and epoch_idx != 0:
-        cfg.learning_rate = 1e-5
+        for g in optimizer.param_groups:
+            g['lr'] = 1e-5
     
     if epoch_idx % 10 == 0:
         #there are 10 options for image sizes.
