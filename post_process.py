@@ -25,7 +25,7 @@ import torch
 
 class PostProcess:
         
-    def __init__(self, box_num_per_grid, feature_size, topN_pred, anchors_list, IoU_thresh=cfg.mAP_iou_thresh, confidence_thresh=cfg.confidence_thresh, 
+    def __init__(self, box_num_per_grid, feature_size, topN_pred, anchors_list, iou_thresh=cfg.mAP_iou_thresh, confidence_thresh=cfg.confidence_thresh, 
                                                     subsampled_ratio=cfg.subsampled_ratio, num_class=cfg.num_of_class, nms_iou_thresh=cfg.nms_iou_thresh):
         '''
         Initialize parameters. 
@@ -39,7 +39,7 @@ class PostProcess:
         self.anchors_list       = torch.from_numpy(anchors_list).to(cfg.device)
         self.feature_size       = feature_size
         self.subsampled_ratio   = subsampled_ratio
-        self.iou_thresh         = IoU_thresh
+        self.iou_thresh         = iou_thresh
         self.confidence_thresh  = confidence_thresh
         self.nms_iou_thres      = nms_iou_thresh
         self.epoch_predboxes    = []
