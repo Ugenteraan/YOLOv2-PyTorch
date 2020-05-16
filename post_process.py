@@ -52,6 +52,7 @@ class PostProcess:
     def get_box_coordinates(self, network_prediction):
         '''
         Given the regression values from the prediction of the network, calculate back the predicted box's coordinate for the entire batch.
+        Can also be used as a standalone module apart from nms related.
         '''
 
         #set the array values for the predicted probability lower than the threshold to 0

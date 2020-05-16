@@ -1,11 +1,11 @@
-from load_data import Load_Dataset, ToTensor, ImgNet_loadDataset
+from load_data import LoadDataset, ToTensor
 import cfg
 import torch
 from torch.utils.data import DataLoader
 import cv2
 from label_format import calculate_ground_truth
 import numpy as np
-from yolo_net import yolo, optimizer, loss, lr_decay #decay rate update
+from yolo_net import YOLO, OPTIMIZER, loss, LR_DECAY #decay rate update
 from tqdm import tqdm
 from post_process import PostProcess
 from random import randint
@@ -13,7 +13,7 @@ from random import randint
 import itertools
 import os
 
-print(yolo)
+print(YOLO)
 chosen_image_index = 0
 highest_map = 0
 
@@ -22,10 +22,10 @@ training_mAPs_list = []
 
 
 
-training_data = Load_Dataset(resized_image_size=320, transform=ToTensor())
+training_data = LoadDataset(resized_image_size=320, transform=ToTensor())
 
 dataloader = DataLoader(training_data, batch_size=1, shuffle=False, num_workers=4)
-for epoch_idx in range(cfg.total_epoch):
+for epoch_idx in range(cfg.TOTAL_EPOCH):
 
     epoch_loss = 0
     training_loss = []
@@ -33,11 +33,11 @@ for epoch_idx in range(cfg.total_epoch):
 
 
     chosen_image_size = 320
-    feature_size = int(chosen_image_size/cfg.subsampled_ratio)
+    feature_size = int(chosen_image_size/cfg.SUBSAMPLED_RATIO)
 
 
 
-    postProcess_obj = PostProcess(box_num_per_grid=cfg.k, feature_size=feature_size, topN_pred=cfg.mAP_topN, anchors_list=training_data.anchors_list)
+    postProcess_obj = PostProcess(box_num_per_grid=cfg.K, feature_size=feature_size, topN_pred=cfg.MAP_TOPN, anchors_list=training_data.anchors_list)
 
 
     for i, sample in tqdm(enumerate(dataloader)):
@@ -48,12 +48,12 @@ for epoch_idx in range(cfg.total_epoch):
         else:
             continue
 
-        batch_x, batch_y = sample["image"].to(cfg.device), sample["label"].to(cfg.device)
+        batch_x, batch_y = sample["image"].to(cfg.DEVICE), sample["label"].to(cfg.DEVICE)
 
-        optimizer.zero_grad()
+        OPTIMIZER.zero_grad()
 
         #[batch size, feature map width, feature map height, number of anchors, 5 + number of classes]
-        outputs = yolo(batch_x) #THE OUTPUTS ARE NOT YET GONE THROUGH THE ACTIVATION FUNCTIONS.
+        outputs = YOLO(batch_x) #THE OUTPUTS ARE NOT YET GONE THROUGH THE ACTIVATION FUNCTIONS.
 
         total_loss = loss(predicted_array=outputs, label_array=batch_y)
         # mAP_object._collect(predicted_boxes=outputs.detach().cpu().numpy(), gt_boxes=batch_y.cpu().numpy())
@@ -61,7 +61,7 @@ for epoch_idx in range(cfg.total_epoch):
         nms_output = postProcess_obj.nms(predictions=outputs.detach().contiguous()).cpu().numpy()
         training_loss.append(total_loss.item())
         total_loss.backward()
-        optimizer.step()
+        OPTIMIZER.step()
         img_ = np.asarray(np.transpose(batch_x.cpu().numpy()[0], (1,2,0)))
         img = cv2.cvtColor(img_, cv2.COLOR_BGR2RGB)
 
@@ -76,7 +76,7 @@ for epoch_idx in range(cfg.total_epoch):
             # print(int(calculated_batch[0][k][0]), int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2]), int(calculated_batch[0][k][3]))
             # try:
 
-            cv2.putText(img, (str(cfg.classes[int(gt_box[0][k][5])])), (int(gt_box[0][k][1])+20,
+            cv2.putText(img, (str(cfg.CLASSES[int(gt_box[0][k][5])])), (int(gt_box[0][k][1])+20,
                                                                                   int(gt_box[0][k][2])-10), cv2.FONT_HERSHEY_SIMPLEX,
                                                                                                                                     0.4, (36,255,12), 2)
             cv2.rectangle(img, (int(gt_box[0][k][1]), int(gt_box[0][k][2])), (int(gt_box[0][k][3]), int(gt_box[0][k][4])),
@@ -88,7 +88,7 @@ for epoch_idx in range(cfg.total_epoch):
             # print(int(calculated_batch[0][k][0]), int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2]), int(calculated_batch[0][k][3]))
             try:
 
-                cv2.putText(img, (str(round(nms_output[0][k][0],4))+", "+ str(cfg.classes[int(nms_output[0][k][5])])), (int(nms_output[0][k][1]),
+                cv2.putText(img, (str(round(nms_output[0][k][0],4))+", "+ str(cfg.CLASSES[int(nms_output[0][k][5])])), (int(nms_output[0][k][1]),
                                                                                     int(nms_output[0][k][2])-8), cv2.FONT_HERSHEY_SIMPLEX,
                                                                                                                                         0.4, (36,255,12), 2)
                 cv2.rectangle(img, (int(nms_output[0][k][1]), int(nms_output[0][k][2])), (int(nms_output[0][k][3]), int(nms_output[0][k][4])),
@@ -102,7 +102,7 @@ for epoch_idx in range(cfg.total_epoch):
 
 
 
-    lr_decay.step() #decay rate update
+    LR_DECAY.step() #decay rate update
 
     # meanAP = mAP_object.calculate_meanAP()
     # print("MEAN Avg Prec : ", meanAP)

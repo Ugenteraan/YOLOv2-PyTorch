@@ -4,16 +4,16 @@ Configuration file.
 import glob
 import os
 import torch
-from utils import get_classes, ImgNet_get_classes, ImgNet_check_model
+from utils import get_classes, imgnet_get_classes, imgnet_check_model
 
 
 ###IMAGENET config
 IMGNET_DATASET_PATH = '../ImageNet'
-IMGNET_CLASSES = ImgNet_get_classes(folder_path=IMGNET_DATASET_PATH)
+IMGNET_CLASSES = imgnet_get_classes(folder_path=IMGNET_DATASET_PATH)
 IMGNET_NUM_OF_CLASS = len(IMGNET_CLASSES)
 IMGNET_MODEL_SAVE_PATH_FOLDER = './imagenet_model/'
 IMGNET_MODEL_SAVE_NAME = 'imagenet_model.pth'
-IMGNET_MODEL_PRESENCE = ImgNet_check_model(model_path=IMGNET_MODEL_SAVE_PATH_FOLDER+IMGNET_MODEL_SAVE_NAME)
+IMGNET_MODEL_PRESENCE = imgnet_check_model(model_path=IMGNET_MODEL_SAVE_PATH_FOLDER+IMGNET_MODEL_SAVE_NAME)
 IMGNET_LEARNING_RATE = 1e-3
 IMGNET_LEARNING_RATE_DECAY = 0.9
 IMGNET_TOTAL_EPOCH = 160
@@ -44,7 +44,7 @@ BATCH_SIZE = 20
 NMS_IOU_THRESH = 0.7
 
 #Get the image and annotation file paths
-LIST_IMAGES = sorted([x for x in glob.glob(DATA_IMAGES_PATH + '/**')])     #length : 17125
+LIST_IMAGES = sorted([x for x in glob.glob(DATA_IMAGES_PATH + '/**')]) #length : 17125
 LIST_ANNOTATIONS = sorted([x for x in glob.glob(DATA_ANNOTATION_PATH + '/**')]) #length : 17125
 TOTAL_IMAGES = len(LIST_IMAGES)
 
