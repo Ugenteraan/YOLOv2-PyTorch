@@ -15,7 +15,7 @@ class mAP:
         c) If a ground-truth box is missed without a predicted box, then it's a FN. (FN is not needed to calculate Interpolated Precision and/or 
            Average Precision)
         d) If the chosen box has less than a certain set threshold with a ground-truth box but class predicted correctly, it's a FP.
-        e) If the chosen box has more than a certain set threshold with a ground-truth box, class is predicted correctly, but it's a duplicated
+        e) If the chosen box has more than a certain set threshold with a ground-truth box, cmnbv cxz xvcbnm<, lass is predicted correctly, but it's a duplicated
         prediction, then it's a FP.
     3) Calculate the recall and precision based on the TP, FP and FN for each class.
     4) Calculate the Interpolated Precision (Calculated at each recall level) for each class.
@@ -336,7 +336,7 @@ class mAP:
                 
 
 
-    def get_topN_prediction(self, predicted_boxes):
+    def get_topN_prediction(self, predicted_boxes, sortAll=False):
         '''
         Returns the top N predicted array based on the confidence scores.
         NOTE: I could not find a way to sort ALL the boxes based on the confidence score using a numpy function. This is due to the fact that our 
@@ -358,7 +358,10 @@ class mAP:
         #sort the arrays in ascending order and np.flip it to get it in the decreasing order.
         sorted_indexes = np.flip(flatten_pred.argsort(axis=1), axis=1)
         
-        topN_indexes = sorted_indexes[:,:self.top_N] #Get the top N predictions from the entire batch.
+        if sortAll:
+            topN_indexes = sorted_indexes[:,:] #Sort the entire array in all batches.
+        else: 
+            topN_indexes = sorted_indexes[:,:self.top_N]  #Get the top N predictions from the entire batch.
         
         #use the defined function to convert the indexes to a grid-like indexes.
         cvtGenerator = lambda x:self.cvt_flattenedIndex2gridIndex(flattened_index=x)
@@ -393,7 +396,70 @@ class mAP:
         
         return xgrid,ygrid,anchor_index
             
+    def nms_iou(self, predicted_box, gt_boxes):
+        '''
+        Calculates the IoU between multiple boxes.
+        '''
+        
+        gt_boxes = np.asarray(gt_boxes, dtype=np.float32)
+        
+        x = np.minimum(gt_boxes[:,1] + gt_boxes[:,3], predicted_box[1] + predicted_box[3]) - np.maximum(gt_boxes[:,1], predicted_box[1])
+        y = np.minimum(gt_boxes[:,2] + gt_boxes[:,4], predicted_box[2] + predicted_box[4]) - np.maximum(gt_boxes[:,2], predicted_box[2])
+        
+        intersection = np.maximum(x * y, 0) #if there is no overlap, the intersection will be either 0 or less. Hence we set it to 0.
+        union = (gt_boxes[:, 3] * gt_boxes[:, 4]) + (predicted_box[3] * predicted_box[4])
+        
+        #returns a numpy array of shape [number of gt box] where each element represents the IoU between the predicted box and the ground-truth box.
+        return intersection/union
+    
+    
+    def non_max_suppression(self, predictions, nms_iou_thresh=cfg.nms_iou_thresh, prob_threshold=cfg.confidence_thresh):
+        '''
+        Non-Max Suppression process.
+        1) Get the bounding box prediction with the highest confidence.
+        2) Check the IoU of this selected bounding box with all the other remaining boxes iteratively.
+        3) Whichever boxes that has more than a certain IoU will be removed from the list.
+        4) Repeat the process until there are no more boxes left.
+        '''
+        
+        predictions = predictions[:]
+        
+        boolean_array = predictions[:,:,:,:,0] < prob_threshold 
+        predictions[boolean_array] = 0
+        
+        sorted_predictions, indexes = self.get_topN_prediction(predicted_boxes=predictions, sortAll=True)
+        
+        chosen_indexes = []
+        
+        batch_size = sorted_predictions.shape[0]
+        print(sorted_predictions.shape)
+        print(indexes[0][:])
+        
+        for b in range(batch_size):
+            _batched_indexes = []
+            for i in range(sorted_predictions.shape[1]):
+                
+                if int(sorted_predictions[b][i][0]) == 0:
+                    continue
+                
+                _batched_indexes.append([indexes[0][b][i]])
+                ref_box = predictions[b, indexes[0][b][i], indexes[1][b][i], indexes[2][b][i]]
+                
+                
+                for j in range(i+1, sorted_predictions.shape[1]):
+                    
+                    
+                    
             
             
-
+            
+            
+            
+            
+            
+            
+            
+            
+            
+        
 

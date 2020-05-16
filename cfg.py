@@ -1,6 +1,7 @@
 import glob
 import os
 from utils import get_classes, ImgNet_get_classes, ImgNet_check_model
+import torch
 
 ###IMAGENET config
 ImgNet_dataset_path = '../ImageNet'
@@ -16,6 +17,7 @@ ImgNet_batch_size = 50
 ImgNet_image_size = 224
 ###
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 data_images_path     = '../VOCdevkit/VOC2012/JPEGImages'
 data_annotation_path = '../VOCdevkit/VOC2012/Annotations'
 trained_model_path_folder = './yolo_model/'
@@ -25,16 +27,17 @@ image_depth  = 3
 detection_conv_size = 3
 subsampled_ratio = 32
 k = 5 #number of anchor box in a grid
-learning_rate = 1e-4
-learning_rate_decay = 0.95
+learning_rate = 1e-5
+learning_rate_decay = 0.999
 lambda_coord = 5
 lambda_noobj = 0.5
 epsilon_value = 1e-8
 total_epoch = 1000
 mAP_topN = 5
 mAP_iou_thresh = 0.5
-confidence_thresh = 0.7
+confidence_thresh = 0.8
 batch_size = 20
+nms_iou_thresh = 0.7
 
 #Get the image and annotation file paths
 list_images      = sorted([x for x in glob.glob(data_images_path + '/**')])     #length : 17125

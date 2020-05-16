@@ -313,5 +313,4 @@ def generate_training_data(data_index, anchors_list, xml_file_path, classes, res
 
     
     
-    return (image_array, label_array)
-
+    return (image_array, label_array)    

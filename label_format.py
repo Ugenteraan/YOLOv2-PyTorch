@@ -132,7 +132,7 @@ def label_formatting(gt_class_labels, gt_boxes, anchors_list, subsampled_ratio, 
     return label_array
 
 
-def calculate_ground_truth(subsampled_ratio, anchors_list, resized_image_size, network_prediction, prob_threshold):
+def calculate_ground_truth(subsampled_ratio, anchors_list, resized_image_size, network_prediction, prob_threshold, ground_truth_mode=False):
     '''
     Given the regression predictions from the network in batches, calculate back the predicted box's coordinates for every image.
     '''
@@ -179,7 +179,12 @@ def calculate_ground_truth(subsampled_ratio, anchors_list, resized_image_size, n
             x2 = center_x + width/2
             y2 = center_y + height/2
             
-            class_index = np.argmax(predicted_arrays[gridX][gridY][anchor_index][5:])
+            if ground_truth_mode:
+                
+                class_index = predicted_arrays[gridX][gridY][anchor_index][5]
+            
+            else:
+                class_index = np.argmax(predicted_arrays[gridX][gridY][anchor_index][5:])
 
             transformed_values.append([pred_confidence,x1,y1,x2,y2, class_index])
             

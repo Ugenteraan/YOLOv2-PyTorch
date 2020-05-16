@@ -70,7 +70,15 @@ class YOLOv2(NN.Module):
         '''
         Apply activation functions on the predicted confidence and centers.
         '''
+        # placeholder_tensor = torch.zeros_like(prediction)
+        # predicted_confidence = NN.Sigmoid()(prediction[:,:,:,:,0:1])
+        # predicted_centerX = NN.Sigmoid()(prediction[:,:,:,:,1:2])
+        # predicted_centerY = NN.Sigmoid()(prediction[:,:,:,:,2:3])
         
+        # placeholder_tensor[:,:,:,:,0:1] = predicted_confidence
+        # placeholder_tensor[:,:,:,:,1:2] = predicted_centerX
+        # placeholder_tensor[:,:,:,:,2:3] = predicted_centerY
+        # placeholder_tensor[:,:,:,:,3:] = prediction[:,:,:,:,3:]
         prediction[:,:,:,:,0:3] = NN.Sigmoid()(prediction[:,:,:,:,0:3])
         
         return prediction
@@ -155,7 +163,7 @@ def loss(predicted_array, label_array):
     
 yolo = YOLOv2(k=cfg.k, num_classes=cfg.num_of_class, init_weights=True)
 
-optimizer = Adam(yolo.parameters(), lr = cfg.learning_rate)
+optimizer = Adam(yolo.parameters(), lr = cfg.learning_rate, weight_decay=5e-5)
 lr_decay = lr_scheduler.ExponentialLR(optimizer, gamma=cfg.learning_rate_decay)
 
 
