@@ -95,22 +95,30 @@ class PostProcess:
 
     def iou_check(self, boxA, boxB):
         '''
-        Calculate the IoU between a batch of single array with the same batch of many arrays. If the confidence is 0, the IoU should be 0 as well.
+        Calculate the IoU between a batch of single array with the same batch of the remaining arrays on the right.
         '''
         
         xA = torch.max(boxA[:,:,1], boxB[:,:,1])
-        yA = torch.max(boxA[:,:,1], boxB[:,:,1])
-        xB = torch.min(boxA[:,:,2], boxB[:,:,2])
-        yB = torch.min(boxA[:,:,3], boxB[:,:,3])
+        yA = torch.max(boxA[:,:,2], boxB[:,:,2])
+        xB = torch.min(boxA[:,:,3], boxB[:,:,3])
+        yB = torch.min(boxA[:,:,4], boxB[:,:,4])
         
         ref_tensor = torch.Tensor([0.]).to(cfg.device)
-        interArea = torch.max(ref_tensor, xB-xA+1) * torch.max(ref_tensor, yB-yA+1)
+        interArea_noadd = torch.max(ref_tensor, xB-xA) * torch.max(ref_tensor, yB-yA)
         
+        #Since adding one to make up for the 0-indexing would cause boxes with 0 coordinates to have 1 as interArea, we'll implement
+        #torch.where to add 1 only when the the value of the element is not 0.
+        interArea_added = torch.max(ref_tensor, xB-xA+1) * torch.max(ref_tensor, yB-yA+1)
+        #torch where keeps the elements when it's true and replace with the second array given when it's false.
+        interArea = torch.where(interArea_noadd==0, interArea_noadd, interArea_added) 
         
-        print(interArea.size())
-        print(boxB.size())
+        #we can add 1 safely here since an intersection area of 0 would yield 0 when divided anyways.
+        boxA_area = (boxA[:,:,3] - boxA[:,:,1]+1) * (boxA[:,:,4] - boxA[:,:,2]+1)
+        boxB_area = (boxB[:,:,3] - boxB[:,:,1]+1) * (boxB[:,:,4] - boxB[:,:,2]+1)
         
-        return None
+        iou = interArea / (boxA_area + boxB_area - interArea)
+        
+        return iou
         
             
 
@@ -140,12 +148,34 @@ class PostProcess:
         # Therefore, we need to specify the batch indices as well. Hence the torch.arange.
         sorted_pred = reshaped_pred[torch.arange(start=0,end=batch_size).view(-1,1), sorted_index[:,:]]
         
+        
+        #zero-out the arrays that contains lower than the confidence threshold.
+        boolean_array = sorted_pred[:,:,0] < self.confidence_thresh
+        sorted_pred[boolean_array] = 0
+        
+        #we will iterate through every prediction in all the batches and suppress the boxes that belongs to the same class of another box
+        #that has a higher confidence and the IoU between them is more than the set threshold.
         for i in range(num_predictions-1): #-1 since the last prediction has nothing to be compared to.
             
             ref_pred = sorted_pred[:,i:i+1] # i+1 is to retain the dimensions.
+            ref_class = sorted_pred[:,i:i+1,5:6]
             
-            iou_batch = self.iou_check(boxA=ref_pred, boxB=sorted_pred[:,i+1:])
+            comparing_arrays = sorted_pred[:,i+1:].contiguous() #make a copy of the arrays that we'll be comparing our reference pred to.
+            
+            #whichever prediction that does not belong to the same class as the reference pred array will be zeroed out.
+            comparing_arrays = torch.where(comparing_arrays[:,:,5:6]==ref_class, comparing_arrays, torch.Tensor([0.]).to(cfg.device))
+            
+            #get the iou between the reference pred array and all other remaining arrays on the right.
+            iou_batch = self.iou_check(boxA=ref_pred, boxB=comparing_arrays)
+            
+            #NOTE that we're not using comparing_arrays in the torch.where because the arrays that do not have the same class
+            #with the reference array were zeroed. Whichever array that has the iou more than the threshold, the confidence value
+            #will be zeroed.
+            sorted_pred[:,i+1:,0] = torch.where((iou_batch<self.nms_iou_thres) , sorted_pred[:,i+1:,0], torch.Tensor([0.]).to(cfg.device))
         
+        #zero the entire array that has confidence lower than the threshold again.
+        boolean_array = sorted_pred[:,:,0] < self.confidence_thresh
+        sorted_pred[boolean_array] = 0 
         
-        
-        
+        return sorted_pred
+            
