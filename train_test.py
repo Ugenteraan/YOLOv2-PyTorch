@@ -1,3 +1,8 @@
+'''
+Was used to test YOLO's correctness.
+'''
+
+'''
 from load_data import LoadDataset, ToTensor
 import cfg
 import torch
@@ -12,6 +17,7 @@ from random import randint
 # from darknet19 import darknet19, ImgNet_optimizer, ImgNet_lr_decay, ImgNet_criterion
 import itertools
 import os
+from utils import calculate_map
 
 print(YOLO)
 chosen_image_index = 0
@@ -106,6 +112,8 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
 
     avg_prec = postProcess_obj.calculate_ap()
     print(avg_prec)
+    mean_ap = calculate_map(avg_prec)
+    print(mean_ap)
     postProcess_obj.clear_lists()
 
     LR_DECAY.step() #decay rate update
@@ -117,48 +125,4 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
 
     training_losses_list.append(training_loss)
     # training_mAPs_list.append(meanAP)
-
-
-
-
-ap_file = open("map.txt", 'w+')
-ap_file.write(str(training_mAPs_list))
-ap_file.close()
-
-loss_file = open("loss.txt", "w+")
-loss_file.write(str(training_losses_list))
-loss_file.close()
-
-
-
-
-
-
-
-
-
-    # img_ = np.asarray(np.transpose(batch_x.cpu().numpy()[0], (1,2,0)))
-    # img = cv2.cvtColor(img_, cv2.COLOR_BGR2RGB)
-
-    # calculated_batch = calculate_ground_truth(subsampled_ratio=32, anchors_list=training_data.anchors_list, resized_image_size=320,
-    #                     network_prediction=outputs.detach().cpu().numpy(), prob_threshold=0.99)
-
-
-    # # print("CLASS : " , calculated_batch[0])
-    # for k in range(calculated_batch.shape[1]):
-    #     # print(int(calculated_batch[0][k][0]), int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2]), int(calculated_batch[0][k][3]))
-    #     # try:
-
-    #     cv2.putText(img, (str(round(calculated_batch[0][k][0],4))+", "+ str(cfg.classes[int(calculated_batch[0][k][5])])), (int(calculated_batch[0][k][1]),
-    #                                                                           int(calculated_batch[0][k][2])-8), cv2.FONT_HERSHEY_SIMPLEX,
-    #                                                                                                                             0.4, (36,255,12), 2)
-    #     cv2.rectangle(img, (int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2])), (int(calculated_batch[0][k][3]), int(calculated_batch[0][k][4])),
-    #                 (0,255,0), 1)
-    #     # except Exception as e:
-    #     #     print(e)
-    #     #     pass
-
-    # cv2.imshow("img", img)
-    # cv2.waitKey(0)
-    # break
-
+'''

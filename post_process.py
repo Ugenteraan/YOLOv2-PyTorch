@@ -44,6 +44,7 @@ Output: Tensor shaped [batch_size, total_anchor_nums, 5+class_num] where the sup
 import numpy as np
 import torch
 import cfg
+from utils import nms_iou_check, map_iou_check
 
 class PostProcess:
     '''
@@ -54,9 +55,6 @@ class PostProcess:
                  subsampled_ratio=cfg.SUBSAMPLED_RATIO, num_class=cfg.NUM_OF_CLASS, nms_iou_thresh=cfg.NMS_IOU_THRESH):
         '''
         Initialize parameters.
-        box_num_per_grid : the number of anchors/boxes in a grid/cell.
-        topN_pred : the top N prediction for mAP calculation.
-        anchors_list : generated list of anchors used for the retrieval of the bounding box coordinates.
         '''
 
         self.num_of_anchor = box_num_per_grid
@@ -318,7 +316,7 @@ class PostProcess:
             comparing_arrays = torch.where(comparing_arrays[:, :, 5:6] == ref_class, comparing_arrays, torch.Tensor([0.]).to(cfg.DEVICE))
 
             #get the iou between the reference pred array and all other remaining arrays on the right.
-            iou_batch = nms_iou_check(box_a=ref_pred, box_b=comparing_arrays)
+            iou_batch = nms_iou_check(box_a=ref_pred, box_b=comparing_arrays, device=cfg.DEVICE)
 
             #NOTE that we're not using comparing_arrays in the torch.where because the arrays that do not have the same class
             #with the reference array were zeroed. Whichever array that has the iou more than the threshold, the confidence value
@@ -330,50 +328,3 @@ class PostProcess:
         sorted_pred[boolean_array] = 0
 
         return sorted_pred
-
-
-def map_iou_check(box_a, box_b):
-    '''
-    Calculate the IoU between two given boxes for mAP calculation. The given boxes are in the format of [confidence, x1,y1,x2,y2].
-    '''
-    x_a = max(box_a[1], box_b[1])
-    y_a = max(box_a[2], box_b[2])
-    x_b = min(box_a[3], box_b[3])
-    y_b = min(box_a[4], box_b[4])
-
-    inter_area = max(0, x_b-x_a+1) * max(0, y_b-y_a+1)
-
-    box_a_area = (box_a[3] - box_a[1] + 1) * (box_a[4] - box_a[2] + 1)
-    box_b_area = (box_b[3] - box_b[1] + 1) * (box_b[4] - box_b[2] + 1)
-
-    iou = inter_area / (box_a_area + box_b_area - inter_area)
-
-    return iou
-
-
-def nms_iou_check(box_a, box_b):
-    '''
-    Calculate the IoU between a batch of single array with the same batch of the remaining arrays on the right.
-    '''
-
-    x_a = torch.max(box_a[:, :, 1], box_b[:, :, 1])
-    y_a = torch.max(box_a[:, :, 2], box_b[:, :, 2])
-    x_b = torch.min(box_a[:, :, 3], box_b[:, :, 3])
-    y_b = torch.min(box_a[:, :, 4], box_b[:, :, 4])
-
-    ref_tensor = torch.Tensor([0.]).to(cfg.DEVICE)
-    inter_area_noadd = torch.max(ref_tensor, x_b-x_a) * torch.max(ref_tensor, y_b-y_a)
-
-    #Since adding one to make up for the 0-indexing would cause boxes with 0 coordinates to have 1 as interArea, we'll implement
-    #torch.where to add 1 only when the the value of the element is not 0.
-    inter_area_added = torch.max(ref_tensor, x_b-x_a+1) * torch.max(ref_tensor, y_b-y_a+1)
-    #torch where keeps the elements when it's true and replace with the second given array when it's false.
-    inter_area = torch.where(inter_area_noadd == 0, inter_area_noadd, inter_area_added)
-
-    #we can add 1 safely here since an intersection area of 0 would yield 0 when divided anyways.
-    box_a_area = (box_a[:, :, 3] - box_a[:, :, 1]+1) * (box_a[:, :, 4] - box_a[:, :, 2]+1)
-    box_b_area = (box_b[:, :, 3] - box_b[:, :, 1]+1) * (box_b[:, :, 4] - box_b[:, :, 2]+1)
-
-    iou = inter_area / (box_a_area + box_b_area - inter_area)
-
-    return iou

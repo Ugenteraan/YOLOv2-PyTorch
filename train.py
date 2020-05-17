@@ -11,8 +11,9 @@ from torch.utils.data import DataLoader
 from load_data import LoadDataset, ToTensor, ImgnetLoadDataset
 import cfg
 from yolo_net import YOLO, OPTIMIZER, LR_DECAY, loss #decay rate update
-from mAP import mAP
+from post_process import PostProcess
 from darknet19 import DARKNET19, IMGNET_OPTIMIZER, IMGNET_LR_DECAY, IMGNET_CRITERION, calculate_accuracy
+from utils import calculate_map
 
 
 if not cfg.IMGNET_MODEL_PRESENCE:
@@ -26,7 +27,7 @@ if not cfg.IMGNET_MODEL_PRESENCE:
 
     IMGNET_DATALOADER = DataLoader(IMGNET_TRAINING_DATA, batch_size=cfg.IMGNET_BATCH_SIZE, shuffle=True, num_workers=4)
 
-    BEST_ACCURACY = 0
+    best_accuracy = 0
     for epoch_idx in range(cfg.IMGNET_TOTAL_EPOCH):
 
         epoch_training_loss = []
@@ -56,8 +57,8 @@ if not cfg.IMGNET_MODEL_PRESENCE:
         current_accuracy = np.average(epoch_accuracy)
         print("Epoch %d, \t Training Loss : %g, \t Training Accuracy : %g"%(epoch_idx, np.average(epoch_training_loss), current_accuracy))
 
-        if current_accuracy > BEST_ACCURACY:
-            BEST_ACCURACY = current_accuracy
+        if current_accuracy > best_accuracy:
+            best_accuracy = current_accuracy
             torch.save(DARKNET19.state_dict(), cfg.IMGNET_MODEL_SAVE_PATH_FOLDER+cfg.IMGNET_MODEL_SAVE_NAME)
 
 
@@ -101,7 +102,7 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
 
     dataloader = DataLoader(training_data, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=4)
 
-    mAP_object = mAP(box_num_per_grid=cfg.K, feature_size=feature_size, topN_pred=cfg.MAP_TOPN, anchors_list=training_data.anchors_list)
+    postProcess_obj = PostProcess(box_num_per_grid=cfg.K, feature_size=feature_size, anchors_list=training_data.anchors_list)
 
     for i, sample in tqdm(enumerate(dataloader)):
         # print(sample["image"].shape)
@@ -115,26 +116,38 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
         outputs = YOLO(batch_x) #THE OUTPUTS ARE NOT YET GONE THROUGH THE ACTIVATION FUNCTIONS.
 
         total_loss = loss(predicted_array=outputs, label_array=batch_y)
-        mAP_object._collect(predicted_boxes=outputs.detach().cpu().numpy(), gt_boxes=batch_y.cpu().numpy())
+
+        #Suppress the prediction outputs.
+        nms_output = postProcess_obj.nms(predictions=outputs.detach().clone().contiguous())
+
+        #collect every mini-batch prediction and ground truth arrays.
+        postProcess_obj.collect(network_output=nms_output.clone(), ground_truth=batch_y.clone())
+
         training_loss.append(total_loss.item())
         total_loss.backward()
         OPTIMIZER.step()
 
 
 
+    postProcess_obj.clear_lists()
     LR_DECAY.step() #decay rate update
 
-    meanAP = mAP_object.calculate_meanAP()
-    print("MEAN Avg Prec : ", meanAP)
     training_loss = np.average(training_loss)
     print("Epoch %d, \t Loss : %g"%(epoch_idx, training_loss))
 
     training_losses_list.append(training_loss)
-    training_maps_list.append(meanAP)
 
-    if meanAP > highest_map:
-        highest_map = meanAP
-        torch.save(YOLO.state_dict(), './yolo_model.pth')
+    #calculate mean
+    if epoch_idx % 10 == 0:
+
+        avg_prec = postProcess_obj.calculate_ap()
+        mean_ap = calculate_map(avg_prec)
+        postProcess_obj.clear_lists()
+        print("Mean AP : ", mean_ap)
+        training_maps_list.append(mean_ap)
+        if mean_ap > highest_map:
+            highest_map = mean_ap
+            torch.save(YOLO.state_dict(), './yolo_model.pth')
 
 
 AP_FILE = open("map.txt", 'w+')
@@ -144,37 +157,3 @@ AP_FILE.close()
 LOSS_FILE = open("loss.txt", "w+")
 LOSS_FILE.write(str(training_losses_list))
 LOSS_FILE.close()
-
-
-
-
-
-
-
-
-
-    # img_ = np.asarray(np.transpose(batch_x.cpu().numpy()[0], (1,2,0)))
-    # img = cv2.cvtColor(img_, cv2.COLOR_BGR2RGB)
-
-    # calculated_batch = calculate_ground_truth(subsampled_ratio=32, anchors_list=training_data.anchors_list, resized_image_size=320,
-    #                     network_prediction=outputs.detach().cpu().numpy(), prob_threshold=0.99)
-
-
-    # # print("CLASS : " , calculated_batch[0])
-    # for k in range(calculated_batch.shape[1]):
-    #     # print(int(calculated_batch[0][k][0]), int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2]), int(calculated_batch[0][k][3]))
-    #     # try:
-
-    #     cv2.putText(img, (str(round(calculated_batch[0][k][0],4))+", "+ str(cfg.classes[int(calculated_batch[0][k][5])])), (int(calculated_batch[0][k][1]),
-    #                                                                           int(calculated_batch[0][k][2])-8), cv2.FONT_HERSHEY_SIMPLEX,
-    #                                                                                                                             0.4, (36,255,12), 2)
-    #     cv2.rectangle(img, (int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2])), (int(calculated_batch[0][k][3]), int(calculated_batch[0][k][4])),
-    #                 (0,255,0), 1)
-    #     # except Exception as e:
-    #     #     print(e)
-    #     #     pass
-
-    # cv2.imshow("img", img)
-    # cv2.waitKey(0)
-    # break
-

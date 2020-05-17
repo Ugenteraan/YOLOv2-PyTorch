@@ -199,7 +199,3 @@ def calculate_ground_truth(subsampled_ratio, anchors_list, network_prediction, p
 
     # return np.asarray(entire_anchor, dtype=np.float32)
     return np.asarray(entire_batch_transformed_values, dtype=np.float32)
-
-
-
-

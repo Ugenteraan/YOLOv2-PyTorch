@@ -6,6 +6,7 @@ import os.path
 import xmltodict
 import numpy as np
 import cv2
+import torch
 from K_Means import K_Means
 from label_format import label_formatting
 
@@ -314,3 +315,62 @@ def generate_training_data(anchors_list, xml_file_path, classes, resized_image_s
 
 
     return (image_array, label_array)
+
+def map_iou_check(box_a, box_b):
+    '''
+    Calculate the IoU between two given boxes for mAP calculation. The given boxes are in the format of [confidence, x1,y1,x2,y2].
+    '''
+    x_a = max(box_a[1], box_b[1])
+    y_a = max(box_a[2], box_b[2])
+    x_b = min(box_a[3], box_b[3])
+    y_b = min(box_a[4], box_b[4])
+
+    inter_area = max(0, x_b-x_a+1) * max(0, y_b-y_a+1)
+
+    box_a_area = (box_a[3] - box_a[1] + 1) * (box_a[4] - box_a[2] + 1)
+    box_b_area = (box_b[3] - box_b[1] + 1) * (box_b[4] - box_b[2] + 1)
+
+    iou = inter_area / (box_a_area + box_b_area - inter_area)
+
+    return iou
+
+
+def nms_iou_check(box_a, box_b, device):
+    '''
+    Calculate the IoU between a batch of single array with the same batch of the remaining arrays on the right.
+    '''
+
+    x_a = torch.max(box_a[:, :, 1], box_b[:, :, 1])
+    y_a = torch.max(box_a[:, :, 2], box_b[:, :, 2])
+    x_b = torch.min(box_a[:, :, 3], box_b[:, :, 3])
+    y_b = torch.min(box_a[:, :, 4], box_b[:, :, 4])
+
+    ref_tensor = torch.Tensor([0.]).to(device)
+    inter_area_noadd = torch.max(ref_tensor, x_b-x_a) * torch.max(ref_tensor, y_b-y_a)
+
+    #Since adding one to make up for the 0-indexing would cause boxes with 0 coordinates to have 1 as interArea, we'll implement
+    #torch.where to add 1 only when the the value of the element is not 0.
+    inter_area_added = torch.max(ref_tensor, x_b-x_a+1) * torch.max(ref_tensor, y_b-y_a+1)
+    #torch where keeps the elements when it's true and replace with the second given array when it's false.
+    inter_area = torch.where(inter_area_noadd == 0, inter_area_noadd, inter_area_added)
+
+    #we can add 1 safely here since an intersection area of 0 would yield 0 when divided anyways.
+    box_a_area = (box_a[:, :, 3] - box_a[:, :, 1]+1) * (box_a[:, :, 4] - box_a[:, :, 2]+1)
+    box_b_area = (box_b[:, :, 3] - box_b[:, :, 1]+1) * (box_b[:, :, 4] - box_b[:, :, 2]+1)
+
+    iou = inter_area / (box_a_area + box_b_area - inter_area)
+
+    return iou
+
+def calculate_map(ap_dict):
+    '''
+    Given a dictionary of Average Precision, Mean Avg. Precision will be returned.
+    '''
+
+    all_ap = ap_dict.values()
+
+    total_class = len(all_ap)
+
+    mean_avg_precision = sum(all_ap)/total_class
+
+    return mean_avg_precision
