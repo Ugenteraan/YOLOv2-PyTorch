@@ -27,7 +27,7 @@ if not cfg.IMGNET_MODEL_PRESENCE:
 
     IMGNET_DATALOADER = DataLoader(IMGNET_TRAINING_DATA, batch_size=cfg.IMGNET_BATCH_SIZE, shuffle=True, num_workers=4)
 
-    best_accuracy = 0
+    BEST_ACCURACY = 0
     for epoch_idx in range(cfg.IMGNET_TOTAL_EPOCH):
 
         epoch_training_loss = []
@@ -57,8 +57,8 @@ if not cfg.IMGNET_MODEL_PRESENCE:
         current_accuracy = np.average(epoch_accuracy)
         print("Epoch %d, \t Training Loss : %g, \t Training Accuracy : %g"%(epoch_idx, np.average(epoch_training_loss), current_accuracy))
 
-        if current_accuracy > best_accuracy:
-            best_accuracy = current_accuracy
+        if current_accuracy > BEST_ACCURACY:
+            BEST_ACCURACY = current_accuracy
             torch.save(DARKNET19.state_dict(), cfg.IMGNET_MODEL_SAVE_PATH_FOLDER+cfg.IMGNET_MODEL_SAVE_NAME)
 
 
@@ -82,8 +82,8 @@ print(YOLO)
 
 HIGHEST_MAP = 0
 
-training_losses_list = []
-training_maps_list = []
+TRAINING_LOSSES_LIST = []
+TRAINING_MAPS_LIST = []
 
 for epoch_idx in range(cfg.TOTAL_EPOCH):
 
@@ -94,6 +94,11 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
     if epoch_idx % 10 == 0:
         #there are 10 options for image sizes.
         chosen_image_index = randint(0, 9)
+
+    #resets the learning rate after every 1000 epochs.
+    if epoch_idx % 1000 == 0 and epoch_idx != 0:
+        for g in OPTIMIZER.param_groups:
+            g['lr'] = 1e-6
 
     chosen_image_size = cfg.IMAGE_SIZES[chosen_image_index]
     feature_size = int(chosen_image_size/cfg.SUBSAMPLED_RATIO)
@@ -137,7 +142,7 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
     training_loss = np.average(training_loss)
     print("Epoch %d, \t Loss : %g"%(epoch_idx, training_loss))
 
-    training_losses_list.append(training_loss)
+    TRAINING_LOSSES_LIST.append(training_loss)
 
     #calculate mean average precision for every 10 epochs
     if epoch_idx % 10 == 0:
@@ -146,16 +151,16 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
         mean_ap = calculate_map(avg_prec)
         postProcess_obj.clear_lists() #clears the list after every mAP calculation.
         print("Mean AP : ", mean_ap)
-        training_maps_list.append(mean_ap)
+        TRAINING_MAPS_LIST.append(mean_ap)
         if mean_ap > highest_map:
             highest_map = mean_ap
             torch.save(YOLO.state_dict(), './yolo_model.pth')
 
 
 AP_FILE = open("map.txt", 'w+')
-AP_FILE.write(str(training_maps_list))
+AP_FILE.write(str(TRAINING_MAPS_LIST))
 AP_FILE.close()
 
 LOSS_FILE = open("loss.txt", "w+")
-LOSS_FILE.write(str(training_losses_list))
+LOSS_FILE.write(str(TRAINING_LOSSES_LIST))
 LOSS_FILE.close()
