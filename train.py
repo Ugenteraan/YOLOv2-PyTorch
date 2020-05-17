@@ -117,11 +117,14 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
 
         total_loss = loss(predicted_array=outputs, label_array=batch_y)
 
-        #Suppress the prediction outputs.
-        nms_output = postProcess_obj.nms(predictions=outputs.detach().clone().contiguous())
+        #for every 10 epochs, suppress the outputs using Non-max suppression and collect the prediction and ground truth arrays for the calculation
+        #of mAP.
+        if epoch_idx % 10 == 0:
+            #Suppress the prediction outputs.
+            nms_output = postProcess_obj.nms(predictions=outputs.detach().clone().contiguous())
 
-        #collect every mini-batch prediction and ground truth arrays.
-        postProcess_obj.collect(network_output=nms_output.clone(), ground_truth=batch_y.clone())
+            #collect every mini-batch prediction and ground truth arrays.
+            postProcess_obj.collect(network_output=nms_output.clone(), ground_truth=batch_y.clone())
 
         training_loss.append(total_loss.item())
         total_loss.backward()
@@ -129,7 +132,6 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
 
 
 
-    postProcess_obj.clear_lists()
     LR_DECAY.step() #decay rate update
 
     training_loss = np.average(training_loss)
@@ -137,12 +139,12 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
 
     training_losses_list.append(training_loss)
 
-    #calculate mean
+    #calculate mean average precision for every 10 epochs
     if epoch_idx % 10 == 0:
 
         avg_prec = postProcess_obj.calculate_ap()
         mean_ap = calculate_map(avg_prec)
-        postProcess_obj.clear_lists()
+        postProcess_obj.clear_lists() #clears the list after every mAP calculation.
         print("Mean AP : ", mean_ap)
         training_maps_list.append(mean_ap)
         if mean_ap > highest_map:
