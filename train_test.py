@@ -37,13 +37,13 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
 
 
 
-    postProcess_obj = PostProcess(box_num_per_grid=cfg.K, feature_size=feature_size, topN_pred=cfg.MAP_TOPN, anchors_list=training_data.anchors_list)
+    postProcess_obj = PostProcess(box_num_per_grid=cfg.K, feature_size=feature_size, anchors_list=training_data.anchors_list)
 
 
     for i, sample in tqdm(enumerate(dataloader)):
         # print(sample["image"].shape)
         # print(sample["label"].shape)
-        if i == 0:
+        if i == 4:
             pass
         else:
             continue
@@ -55,19 +55,23 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
         #[batch size, feature map width, feature map height, number of anchors, 5 + number of classes]
         outputs = YOLO(batch_x) #THE OUTPUTS ARE NOT YET GONE THROUGH THE ACTIVATION FUNCTIONS.
 
+
         total_loss = loss(predicted_array=outputs, label_array=batch_y)
         # mAP_object._collect(predicted_boxes=outputs.detach().cpu().numpy(), gt_boxes=batch_y.cpu().numpy())
         # mAP_object.non_max_suppression(predictions=outputs.detach().cpu().numpy())
-        nms_output = postProcess_obj.nms(predictions=outputs.detach().contiguous()).cpu().numpy()
+        nms_output = postProcess_obj.nms(predictions=outputs.detach().clone().contiguous())
+        postProcess_obj.collect(network_output=nms_output.clone(), ground_truth=batch_y.clone())
+
         training_loss.append(total_loss.item())
         total_loss.backward()
         OPTIMIZER.step()
-        img_ = np.asarray(np.transpose(batch_x.cpu().numpy()[0], (1,2,0)))
+        img_ = np.asarray(np.transpose(batch_x.cpu().numpy()[0], (1, 2, 0)))
         img = cv2.cvtColor(img_, cv2.COLOR_BGR2RGB)
 
         # calculated_batch = calculate_ground_truth(subsampled_ratio=32, anchors_list=training_data.anchors_list, resized_image_size=chosen_image_size,
                             # network_prediction=outputs.detach().cpu().numpy(), prob_threshold=0.7)
         print(nms_output.shape)
+        np_output = nms_output.contiguous().cpu().numpy()
         gt_box = calculate_ground_truth(subsampled_ratio=32, anchors_list=training_data.anchors_list,
                             network_prediction=batch_y.cpu().numpy(), prob_threshold=0.9, ground_truth_mode=True)
         # print("CLASS : " , calculated_batch[0])
@@ -84,14 +88,14 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
             # except Exception as e:
             #     print(e)
             #     pass
-        for k in range(nms_output.shape[1]):
+        for k in range(np_output.shape[1]):
             # print(int(calculated_batch[0][k][0]), int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2]), int(calculated_batch[0][k][3]))
             try:
 
-                cv2.putText(img, (str(round(nms_output[0][k][0],4))+", "+ str(cfg.CLASSES[int(nms_output[0][k][5])])), (int(nms_output[0][k][1]),
-                                                                                    int(nms_output[0][k][2])-8), cv2.FONT_HERSHEY_SIMPLEX,
+                cv2.putText(img, (str(round(np_output[0][k][0],4))+", "+ str(cfg.CLASSES[int(np_output[0][k][5])])), (int(np_output[0][k][1]),
+                                                                                    int(np_output[0][k][2])-8), cv2.FONT_HERSHEY_SIMPLEX,
                                                                                                                                         0.4, (36,255,12), 2)
-                cv2.rectangle(img, (int(nms_output[0][k][1]), int(nms_output[0][k][2])), (int(nms_output[0][k][3]), int(nms_output[0][k][4])),
+                cv2.rectangle(img, (int(np_output[0][k][1]), int(np_output[0][k][2])), (int(np_output[0][k][3]), int(np_output[0][k][4])),
                         (0, 255, 0), 1)
             except:
                 pass
@@ -100,7 +104,9 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
         cv2.waitKey(0)
         break
 
-
+    avg_prec = postProcess_obj.calculate_ap()
+    print(avg_prec)
+    postProcess_obj.clear_lists()
 
     LR_DECAY.step() #decay rate update
 

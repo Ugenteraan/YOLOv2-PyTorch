@@ -10,12 +10,12 @@ class mAP:
     1) Rank the predicted boxes in decreasing order based on the confidence score and choose top-N boxes.
     2) For every chosen boxes, determine if they are TP, FP or FN based on its IoU with the ground-truth boxes (There is no TN since an image
     contains at least 1 object).
-        a) If the chosen box has more than a certain set threshold with a ground-truth box and the class is also predicted correctly, it's a TP.
-        b) If the chosen box has more than a certain set threshold with a ground-truth box but the class is predicted wrongly, it's a FN.
+        a) If the chosen box has more than a certain set iou threshold with a ground-truth box and the class is also predicted correctly, it's a TP.
+        b) If the chosen box has more than a certain set iou threshold with a ground-truth box but the class is predicted wrongly, it's a FN.
         c) If a ground-truth box is missed without a predicted box, then it's a FN. (FN is not needed to calculate Interpolated Precision and/or
            Average Precision)
-        d) If the chosen box has less than a certain set threshold with a ground-truth box but class predicted correctly, it's a FP.
-        e) If the chosen box has more than a certain set threshold with a ground-truth box, cmnbv cxz xvcbnm<, lass is predicted correctly, but it's a duplicated
+        d) If the chosen box has less than a certain set iou threshold with a ground-truth box but class predicted correctly, it's a FP.
+        e) If the chosen box has more than a certain set iou threshold with a ground-truth box, class is predicted correctly, but it's a duplicated
         prediction, then it's a FP.
     3) Calculate the recall and precision based on the TP, FP and FN for each class.
     4) Calculate the Interpolated Precision (Calculated at each recall level) for each class.
