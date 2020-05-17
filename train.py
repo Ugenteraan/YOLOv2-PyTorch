@@ -100,8 +100,11 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
         for g in OPTIMIZER.param_groups:
             g['lr'] = 1e-6
 
+
     chosen_image_size = cfg.IMAGE_SIZES[chosen_image_index]
     feature_size = int(chosen_image_size/cfg.SUBSAMPLED_RATIO)
+
+    print("The chosen image size is : ", chosen_image_size)
 
     training_data = LoadDataset(resized_image_size=chosen_image_size, transform=ToTensor())
 
