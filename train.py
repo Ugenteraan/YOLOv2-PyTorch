@@ -155,8 +155,8 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
         postProcess_obj.clear_lists() #clears the list after every mAP calculation.
         print("Mean AP : ", mean_ap)
         TRAINING_MAPS_LIST.append(mean_ap)
-        if mean_ap > highest_map:
-            highest_map = mean_ap
+        if mean_ap > HIGHEST_MAP:
+            HIGHEST_MAP = mean_ap
             torch.save(YOLO.state_dict(), './yolo_model.pth')
 
 
