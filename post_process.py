@@ -227,6 +227,11 @@ class PostProcess:
 
                 area_under_curve += current_area
 
+                #stop when recall reaches 1. Else, there might be times when recall decreased and increases and these will contribute to AP
+                #value to be more than 100.
+                if int(next_recall) == 1:
+                    break
+
             avg_precision[cfg.CLASSES[class_index]] = area_under_curve
 
         return avg_precision #returns the average precision for each class in a dictionary.
