@@ -221,12 +221,9 @@ class PostProcess:
                  #+1 on the ip index is not needed as the recall basically starts one step behind since we added 0 to its list in the initialization.
                 chosen_ip = interpolated_precision[recall_index]
 
-                current_area = (next_recall - curr_recall)*chosen_ip
-
                 #sometimes the recall value might go down due to the loss of correct prediction. In those times, (next_recall - curr_recall) becomes
                 #less than 0. Area under curve should never be < 0. Hence this error handling.
-                if current_area < 0:
-                    current_area = 0
+                current_area = max(0, (next_recall - curr_recall)*chosen_ip)
 
                 area_under_curve += current_area
 
