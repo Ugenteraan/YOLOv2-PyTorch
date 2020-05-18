@@ -227,7 +227,7 @@ class PostProcess:
 
                 area_under_curve += current_area
 
-                #stop when recall reaches 1. Else, there might be times when recall decreased and increases and these will contribute to AP
+                #stop when recall reaches 1. Else, there might be times when recall decreases and increases and this will contribute to AP
                 #value to be more than 100.
                 if int(next_recall) == 1:
                     break
