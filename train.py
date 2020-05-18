@@ -1,182 +1,168 @@
-from load_data import Load_Dataset, ToTensor, ImgNet_loadDataset
-import cfg
-import torch
-from torch.utils.data import DataLoader
-import cv2
-from label_format import calculate_ground_truth
-import numpy as np
-from yolo_net import yolo, optimizer, loss, lr_decay #decay rate update
-from tqdm import tqdm
-from mAP import mAP
-from random import randint
-from darknet19 import darknet19, ImgNet_optimizer, ImgNet_lr_decay, ImgNet_criterion
+'''
+ImageNet and YOLO model training.
+'''
 import itertools
 import os
+from random import randint
+import torch
+import numpy as np
+from tqdm import tqdm
+from torch.utils.data import DataLoader
+from load_data import LoadDataset, ToTensor, ImgnetLoadDataset
+import cfg
+from yolo_net import YOLO, OPTIMIZER, LR_DECAY, loss #decay rate update
+from post_process import PostProcess
+from darknet19 import DARKNET19, IMGNET_OPTIMIZER, IMGNET_LR_DECAY, IMGNET_CRITERION, calculate_accuracy
+from utils import calculate_map
 
-if not cfg.ImgNet_model_presence:
+
+if not cfg.IMGNET_MODEL_PRESENCE:
     '''
     If the classification model is not present, then we'll have to train the model with the ImageNet images for classification.
     '''
-    print(darknet19)
-    
-    ImgNet_training_data = ImgNet_loadDataset(resized_image_size=cfg.ImgNet_image_size, class_list=cfg.ImgNet_classes,
-                                              dataset_folder_path=cfg.ImgNet_dataset_path, transform=ToTensor())
-    
-    ImgNet_dataloader = DataLoader(ImgNet_training_data, batch_size=cfg.ImgNet_batch_size, shuffle=True, num_workers=4)
-    
-    best_accuracy = 0
-    for epoch_idx in range(cfg.ImgNet_total_epoch):
-        
+    print(DARKNET19)
+
+    IMGNET_TRAINING_DATA = ImgnetLoadDataset(resized_image_size=cfg.IMGNET_IMAGE_SIZE, class_list=cfg.IMGNET_CLASSES,
+                                             dataset_folder_path=cfg.IMGNET_DATASET_PATH, transform=ToTensor())
+
+    IMGNET_DATALOADER = DataLoader(IMGNET_TRAINING_DATA, batch_size=cfg.IMGNET_BATCH_SIZE, shuffle=True, num_workers=4)
+
+    BEST_ACCURACY = 0
+    for epoch_idx in range(cfg.IMGNET_TOTAL_EPOCH):
+
         epoch_training_loss = []
         epoch_accuracy = []
-    
-        for i, sample in tqdm(enumerate(ImgNet_dataloader)):
-            
-            batch_x, batch_y = sample["image"].cuda(), sample["label"].type(torch.long).cuda()
-            
-            ImgNet_optimizer.zero_grad()
-            
-            classification_output = darknet19(batch_x)
 
-            training_loss = ImgNet_criterion(input=classification_output, target=batch_y)
-            
+        for i, sample in tqdm(enumerate(IMGNET_DATALOADER)):
+
+            batch_x, batch_y = sample["image"].cuda(), sample["label"].type(torch.long).cuda()
+
+            IMGNET_OPTIMIZER.zero_grad()
+
+            classification_output = DARKNET19(batch_x)
+
+            training_loss = IMGNET_CRITERION(input=classification_output, target=batch_y)
+
             epoch_training_loss.append(training_loss.item())
-            
+
             training_loss.backward()
-            ImgNet_optimizer.step()
-            
-            batch_acc = darknet19.calculate_accuracy(network_output=classification_output, target=batch_y)
+            IMGNET_OPTIMIZER.step()
+
+            batch_acc = calculate_accuracy(network_output=classification_output, target=batch_y)
             epoch_accuracy.append(batch_acc.item())
-            
-        
-        ImgNet_lr_decay.step()
-        
+
+
+        IMGNET_LR_DECAY.step()
+
         current_accuracy = np.average(epoch_accuracy)
         print("Epoch %d, \t Training Loss : %g, \t Training Accuracy : %g"%(epoch_idx, np.average(epoch_training_loss), current_accuracy))
-        
-        if current_accuracy > best_accuracy:
-            best_accuracy = current_accuracy
-            torch.save(darknet19.state_dict(), cfg.ImgNet_model_save_path_folder + cfg.ImgNet_model_save_name)
-            
+
+        if current_accuracy > BEST_ACCURACY:
+            BEST_ACCURACY = current_accuracy
+            torch.save(DARKNET19.state_dict(), cfg.IMGNET_MODEL_SAVE_PATH_FOLDER+cfg.IMGNET_MODEL_SAVE_NAME)
+
 
 #Transfer Learning
-ImgNet_modelLoad = torch.load(cfg.ImgNet_model_save_path_folder + cfg.ImgNet_model_save_name)
-all_keys = ImgNet_modelLoad.keys()
-total_keys = len(all_keys)
+IMGNET_MODELLOAD = torch.load(cfg.IMGNET_MODEL_SAVE_PATH_FOLDER+cfg.IMGNET_MODEL_SAVE_NAME)
+ALL_KEYS = IMGNET_MODELLOAD.keys()
+TOTAL_KEYS = len(ALL_KEYS)
 
 #exclude the last 2 keys (the classification layer's weight and bias)
-transfer_learning_params = dict(itertools.islice(ImgNet_modelLoad.items(), total_keys-2))
+TRANSFER_LEARNING_PARAMS = dict(itertools.islice(IMGNET_MODELLOAD.items(), TOTAL_KEYS-2))
 
-yolo.load_state_dict(transfer_learning_params, strict=False)
+YOLO.load_state_dict(TRANSFER_LEARNING_PARAMS, strict=False)
 
 if os.path.exists('./yolo_model.pth'):
-    
-    yolo_params = torch.load('./yolo_model.pth')
-    yolo.load_state_dict(yolo_params)
+
+    YOLO_PARAMS = torch.load('./yolo_model.pth')
+    YOLO.load_state_dict(YOLO_PARAMS)
     print("YOLO loaded!")
 
-print(yolo)
-chosen_image_index = 0
-highest_map = 0
+print(YOLO)
 
-training_losses_list = []
-training_mAPs_list = []
+HIGHEST_MAP = 0
 
-for epoch_idx in range(cfg.total_epoch):
-    
+TRAINING_LOSSES_LIST = []
+TRAINING_MAPS_LIST = []
+
+for epoch_idx in range(cfg.TOTAL_EPOCH):
+
     epoch_loss = 0
     training_loss = []
-    
-    if epoch_idx % 1000 == 0 and epoch_idx != 0:
-        for g in optimizer.param_groups:
-            g['lr'] = 1e-5
-    
+
     if epoch_idx % 10 == 0:
         #there are 10 options for image sizes.
-        chosen_image_index = randint(0,9)
-    
-    chosen_image_size = cfg.image_sizes[chosen_image_index]
-    feature_size = int(chosen_image_size/cfg.subsampled_ratio)
-    
-    training_data = Load_Dataset(resized_image_size=chosen_image_size, transform=ToTensor())
+        chosen_image_index = randint(0, 9)
 
-    dataloader = DataLoader(training_data, batch_size=cfg.batch_size, shuffle=True, num_workers=4)
+    #resets the learning rate after every 1000 epochs.
+    if epoch_idx % 1000 == 0 and epoch_idx != 0:
+        for g in OPTIMIZER.param_groups:
+            g['lr'] = 1e-6
 
-    mAP_object = mAP(box_num_per_grid=cfg.k, feature_size=feature_size, topN_pred=cfg.mAP_topN, anchors_list=training_data.anchors_list)
+
+    chosen_image_size = cfg.IMAGE_SIZES[chosen_image_index]
+    feature_size = int(chosen_image_size/cfg.SUBSAMPLED_RATIO)
+
+    print("The chosen image size is : ", chosen_image_size)
+
+    training_data = LoadDataset(resized_image_size=chosen_image_size, transform=ToTensor())
+
+    dataloader = DataLoader(training_data, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=4)
+
+    postProcess_obj = PostProcess(box_num_per_grid=cfg.K, feature_size=feature_size, anchors_list=training_data.anchors_list)
 
     for i, sample in tqdm(enumerate(dataloader)):
         # print(sample["image"].shape)
         # print(sample["label"].shape)
-        
+
         batch_x, batch_y = sample["image"].cuda(), sample["label"].cuda()
-        
-        optimizer.zero_grad()
-        
+
+        OPTIMIZER.zero_grad()
+
         #[batch size, feature map width, feature map height, number of anchors, 5 + number of classes]
-        outputs = yolo(batch_x) #THE OUTPUTS ARE NOT YET GONE THROUGH THE ACTIVATION FUNCTIONS.
-        
-        total_loss = loss(predicted_array= outputs, label_array=batch_y)
-        mAP_object._collect(predicted_boxes=outputs.detach().cpu().numpy(), gt_boxes=batch_y.cpu().numpy())
+        outputs = YOLO(batch_x) #THE OUTPUTS ARE NOT YET GONE THROUGH THE ACTIVATION FUNCTIONS.
+
+        total_loss = loss(predicted_array=outputs, label_array=batch_y)
+
+        #for every 10 epochs, suppress the outputs using Non-max suppression and collect the prediction and ground truth arrays for the calculation
+        #of mAP.
+        if epoch_idx % 10 == 0:
+            #Suppress the prediction outputs.
+            nms_output = postProcess_obj.nms(predictions=outputs.detach().clone().contiguous())
+
+            #collect every mini-batch prediction and ground truth arrays.
+            postProcess_obj.collect(network_output=nms_output.clone(), ground_truth=batch_y.clone())
+
         training_loss.append(total_loss.item())
         total_loss.backward()
-        optimizer.step()                
-        
-        
-    
-    lr_decay.step() #decay rate update
+        OPTIMIZER.step()
 
-    meanAP = mAP_object.calculate_meanAP()
-    print("MEAN Avg Prec : ", meanAP)
+
+
+    LR_DECAY.step() #decay rate update
+
     training_loss = np.average(training_loss)
     print("Epoch %d, \t Loss : %g"%(epoch_idx, training_loss))
-    
-    training_losses_list.append(training_loss)
-    training_mAPs_list.append(meanAP)
-    
-    if meanAP > highest_map:
-        highest_map = meanAP
-        torch.save(yolo.state_dict(), './yolo_model.pth')
+
+    TRAINING_LOSSES_LIST.append(training_loss)
+
+    #calculate mean average precision for every 10 epochs
+    if epoch_idx % 10 == 0:
+
+        avg_prec = postProcess_obj.calculate_ap()
+        mean_ap = calculate_map(avg_prec)
+        postProcess_obj.clear_lists() #clears the list after every mAP calculation.
+        print("Mean AP : ", mean_ap)
+        TRAINING_MAPS_LIST.append(mean_ap)
+        if mean_ap > HIGHEST_MAP:
+            HIGHEST_MAP = mean_ap
+            torch.save(YOLO.state_dict(), './yolo_model.pth')
 
 
-ap_file = open("map.txt", 'w+')
-ap_file.write(str(training_mAPs_list))
-ap_file.close()
+AP_FILE = open("map.txt", 'w+')
+AP_FILE.write(str(TRAINING_MAPS_LIST))
+AP_FILE.close()
 
-loss_file = open("loss.txt", "w+")
-loss_file.write(str(training_losses_list))
-loss_file.close()
-    
-
-
-
-
-
-
-
-
-    # img_ = np.asarray(np.transpose(batch_x.cpu().numpy()[0], (1,2,0)))
-    # img = cv2.cvtColor(img_, cv2.COLOR_BGR2RGB)
-    
-    # calculated_batch = calculate_ground_truth(subsampled_ratio=32, anchors_list=training_data.anchors_list, resized_image_size=320, 
-    #                     network_prediction=outputs.detach().cpu().numpy(), prob_threshold=0.99)
-    
-    
-    # # print("CLASS : " , calculated_batch[0])
-    # for k in range(calculated_batch.shape[1]):
-    #     # print(int(calculated_batch[0][k][0]), int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2]), int(calculated_batch[0][k][3]))
-    #     # try:
-        
-    #     cv2.putText(img, (str(round(calculated_batch[0][k][0],4))+", "+ str(cfg.classes[int(calculated_batch[0][k][5])])), (int(calculated_batch[0][k][1]), 
-    #                                                                           int(calculated_batch[0][k][2])-8), cv2.FONT_HERSHEY_SIMPLEX, 
-    #                                                                                                                             0.4, (36,255,12), 2)
-    #     cv2.rectangle(img, (int(calculated_batch[0][k][1]), int(calculated_batch[0][k][2])), (int(calculated_batch[0][k][3]), int(calculated_batch[0][k][4])),
-    #                 (0,255,0), 1)
-    #     # except Exception as e:
-    #     #     print(e)
-    #     #     pass
-        
-    # cv2.imshow("img", img)
-    # cv2.waitKey(0)
-    # break  
-    
-    
+LOSS_FILE = open("loss.txt", "w+")
+LOSS_FILE.write(str(TRAINING_LOSSES_LIST))
+LOSS_FILE.close()

@@ -1,54 +1,59 @@
+'''
+Configuration file.
+'''
 import glob
 import os
-from utils import get_classes, ImgNet_get_classes, ImgNet_check_model
+import torch
+from utils import get_classes, imgnet_get_classes, imgnet_check_model
+
 
 ###IMAGENET config
-ImgNet_dataset_path = '../ImageNet'
-ImgNet_classes = ImgNet_get_classes(folder_path=ImgNet_dataset_path)
-ImgNet_num_of_class = len(ImgNet_classes)
-ImgNet_model_save_path_folder = './imagenet_model/'
-ImgNet_model_save_name = 'imagenet_model.pth'
-ImgNet_model_presence = ImgNet_check_model(model_path = ImgNet_model_save_path_folder + ImgNet_model_save_name)
-ImgNet_learning_rate = 1e-3
-ImgNet_learning_rate_decay = 0.9
-ImgNet_total_epoch = 160
-ImgNet_batch_size = 50
-ImgNet_image_size = 224
+IMGNET_DATASET_PATH = '../ImageNet'
+IMGNET_CLASSES = imgnet_get_classes(folder_path=IMGNET_DATASET_PATH)
+IMGNET_NUM_OF_CLASS = len(IMGNET_CLASSES)
+IMGNET_MODEL_SAVE_PATH_FOLDER = './imagenet_model/'
+IMGNET_MODEL_SAVE_NAME = 'imagenet_model.pth'
+IMGNET_MODEL_PRESENCE = imgnet_check_model(model_path=IMGNET_MODEL_SAVE_PATH_FOLDER+IMGNET_MODEL_SAVE_NAME)
+IMGNET_LEARNING_RATE = 1e-3
+IMGNET_LEARNING_RATE_DECAY = 0.9
+IMGNET_TOTAL_EPOCH = 160
+IMGNET_BATCH_SIZE = 50
+IMGNET_IMAGE_SIZE = 224
 ###
 
-data_images_path     = '../VOCdevkit/VOC2012/JPEGImages'
-data_annotation_path = '../VOCdevkit/VOC2012/Annotations'
-trained_model_path_folder = './yolo_model/'
-trained_model_name  = 'yolo.pth'
-image_sizes = [320,352,384,416,448,480,512,544,576,608]
-image_depth  = 3
-detection_conv_size = 3
-subsampled_ratio = 32
-k = 5 #number of anchor box in a grid
-learning_rate = 1e-3
-learning_rate_decay = 0.96
-lambda_coord = 20
-lambda_noobj = 0.5
-epsilon_value = 1e-8
-total_epoch = 1000
-mAP_topN = 5
-mAP_iou_thresh = 0.5
-confidence_thresh = 0.7
-batch_size = 20
+
+DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+DATA_IMAGES_PATH = '../VOCdevkit/VOC2012/JPEGImages'
+DATA_ANNOTATION_PATH = '../VOCdevkit/VOC2012/Annotations'
+TRAINED_MODEL_PATH_FOLDER = './yolo_model/'
+TRAINED_MODEL_NAME = 'yolo.pth'
+IMAGE_SIZES = [320, 352, 384, 416, 448, 480, 512, 544, 576, 608]
+IMAGE_DEPTH = 3
+DETECTION_CONV_SIZE = 3
+SUBSAMPLED_RATIO = 32
+K = 5 #number of anchor box in a grid
+LEARNING_RATE = 1e-5
+LEARNING_RATE_DECAY = 0.99
+LAMBDA_COORD = 5
+LAMBDA_NOOBJ = 0.5
+TOTAL_EPOCH = 1000
+MAP_IOU_THRESH = 0.5
+CONFIDENCE_THRESH = 0.8
+BATCH_SIZE = 20
+NMS_IOU_THRESH = 0.7
 
 #Get the image and annotation file paths
-list_images      = sorted([x for x in glob.glob(data_images_path + '/**')])     #length : 17125
-list_annotations = sorted([x for x in glob.glob(data_annotation_path + '/**')]) #length : 17125
-total_images = len(list_images)
+LIST_IMAGES = sorted([x for x in glob.glob(DATA_IMAGES_PATH + '/**')]) #length : 17125
+LIST_ANNOTATIONS = sorted([x for x in glob.glob(DATA_ANNOTATION_PATH + '/**')]) #length : 17125
+TOTAL_IMAGES = len(LIST_IMAGES)
 
 #create the model saving directories if they don't exist.
-if not os.path.exists(ImgNet_model_save_path_folder):
-    os.makedirs(ImgNet_model_save_path_folder)
+if not os.path.exists(IMGNET_MODEL_SAVE_PATH_FOLDER):
+    os.makedirs(IMGNET_MODEL_SAVE_PATH_FOLDER)
 
-if not os.path.exists(trained_model_path_folder):
-    os.makedirs(trained_model_path_folder)
+if not os.path.exists(TRAINED_MODEL_PATH_FOLDER):
+    os.makedirs(TRAINED_MODEL_PATH_FOLDER)
 
-classes = get_classes(xml_files=list_annotations)
-num_of_class = len(classes)
-excluded_classes = [] #if you'd like to exclude certain classes for training.
-
+CLASSES = get_classes(xml_files=LIST_ANNOTATIONS)
+NUM_OF_CLASS = len(CLASSES)
+EXCLUDED_CLASSES = [] #if you'd like to exclude certain classes for training.
