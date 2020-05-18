@@ -15,11 +15,9 @@ from post_process import PostProcess
 from darknet19 import DARKNET19, IMGNET_OPTIMIZER, IMGNET_LR_DECAY, IMGNET_CRITERION, calculate_accuracy
 from utils import calculate_map
 
-
+#If the classification model is not present, then we'll have to train the model with the ImageNet images for classification.
 if not cfg.IMGNET_MODEL_PRESENCE:
-    '''
-    If the classification model is not present, then we'll have to train the model with the ImageNet images for classification.
-    '''
+
     print(DARKNET19)
 
     IMGNET_TRAINING_DATA = ImgnetLoadDataset(resized_image_size=cfg.IMGNET_IMAGE_SIZE, class_list=cfg.IMGNET_CLASSES,
