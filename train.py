@@ -90,7 +90,6 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
     epoch_loss = 0
     training_loss = []
 
-
     if epoch_idx % 10 == 0:
         #there are 10 options for image sizes.
         chosen_image_index = randint(0, 9)

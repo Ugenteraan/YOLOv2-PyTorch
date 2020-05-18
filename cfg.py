@@ -21,6 +21,7 @@ IMGNET_BATCH_SIZE = 50
 IMGNET_IMAGE_SIZE = 224
 ###
 
+
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 DATA_IMAGES_PATH = '../VOCdevkit/VOC2012/JPEGImages'
 DATA_ANNOTATION_PATH = '../VOCdevkit/VOC2012/Annotations'

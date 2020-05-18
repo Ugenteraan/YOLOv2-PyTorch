@@ -153,10 +153,12 @@ def loss(predicted_array, label_array):
 
 
 
+
 YOLO = YOLOv2(k=cfg.K, num_classes=cfg.NUM_OF_CLASS, init_weights=True)
 
 OPTIMIZER = Adam(YOLO.parameters(), lr=cfg.LEARNING_RATE, weight_decay=5e-5)
 LR_DECAY = lr_scheduler.ExponentialLR(OPTIMIZER, gamma=cfg.LEARNING_RATE_DECAY)
+
 
 
 if torch.cuda.is_available():
