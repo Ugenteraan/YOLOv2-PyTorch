@@ -223,6 +223,11 @@ class PostProcess:
 
                 current_area = (next_recall - curr_recall)*chosen_ip
 
+                #sometimes the recall value might go down due to the loss of correct prediction. In those times, (next_recall - curr_recall) becomes
+                #less than 0. Area under curve should never be < 0. Hence this error handling.
+                if current_area < 0:
+                    current_area = 0
+
                 area_under_curve += current_area
 
             avg_precision[cfg.CLASSES[class_index]] = area_under_curve
