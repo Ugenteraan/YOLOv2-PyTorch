@@ -152,9 +152,9 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
         postProcess_obj.clear_lists() #clears the list after every mAP calculation.
         print("Mean AP : ", mean_ap)
         TRAINING_MAPS_LIST.append(mean_ap)
-        if mean_ap > HIGHEST_MAP:
+        if mean_ap > HIGHEST_MAP: #save the model with the highest mAP.
             HIGHEST_MAP = mean_ap
-            torch.save(YOLO.state_dict(), './yolo_model.pth')
+            torch.save(YOLO.state_dict(), cfg.TRAINED_MODEL_PATH_FOLDER+cfg.TRAINED_MODEL_NAME)
 
 
 AP_FILE = open("map.txt", 'w+')
