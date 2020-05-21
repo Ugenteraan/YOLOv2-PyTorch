@@ -68,11 +68,13 @@ TOTAL_KEYS = len(ALL_KEYS)
 #exclude the last 2 keys (the classification layer's weight and bias)
 TRANSFER_LEARNING_PARAMS = dict(itertools.islice(IMGNET_MODELLOAD.items(), TOTAL_KEYS-2))
 
-YOLO.load_state_dict(TRANSFER_LEARNING_PARAMS, strict=False)
+YOLO.load_state_dict(TRANSFER_LEARNING_PARAMS, strict=False) #load the cnn weights.
 
-if os.path.exists('./yolo_model.pth'):
 
-    YOLO_PARAMS = torch.load('./yolo_model.pth')
+#check if a YOLO saved model exists. If yes, load the model.
+if os.path.exists(cfg.TRAINED_MODEL_PATH_FOLDER+cfg.TRAINED_MODEL_NAME):
+
+    YOLO_PARAMS = torch.load(cfg.TRAINED_MODEL_PATH_FOLDER+cfg.TRAINED_MODEL_NAME)
     YOLO.load_state_dict(YOLO_PARAMS)
     print("YOLO loaded!")
 
@@ -92,10 +94,10 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
         #there are 10 options for image sizes.
         chosen_image_index = randint(0, 9)
 
-    #resets the learning rate after every 1000 epochs.
-    if epoch_idx % 1000 == 0 and epoch_idx != 0:
+    #resets the learning rate after every 200 epochs.
+    if epoch_idx % 200 == 0 and epoch_idx != 0:
         for g in OPTIMIZER.param_groups:
-            g['lr'] = 1e-6
+            g['lr'] = 1e-5
 
 
     chosen_image_size = cfg.IMAGE_SIZES[chosen_image_index]
