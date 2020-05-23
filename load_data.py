@@ -76,6 +76,7 @@ class LoadDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
+
         image, label_array = generate_training_data(anchors_list=self.anchors_list,
                                         xml_file_path=self.list_annotations[idx], classes=self.classes, resized_image_size=self.resized_image_size,
                                     subsampled_ratio=self.subsampled_ratio, excluded_classes=self.excluded_classes, image_path=self.list_images[idx])
@@ -99,10 +100,10 @@ class ImgnetLoadDataset(Dataset):
         Initialize parameters and generate the images path list and corresponding labels.
         '''
 
-        self.resized_image_size     = resized_image_size
-        self.class_list             = class_list
-        self.dataset_folder_path    = dataset_folder_path
-        self.transform              = transform
+        self.resized_image_size = resized_image_size
+        self.class_list = class_list
+        self.dataset_folder_path = dataset_folder_path
+        self.transform = transform
 
         self.images_path_list, self.labels_list = imgnet_generate_data(folder_path=self.dataset_folder_path,
                                                                       class_list=self.class_list)

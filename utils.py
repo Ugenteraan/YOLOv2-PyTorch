@@ -93,6 +93,31 @@ def imgnet_read_data(image_path, class_idx, resized_image_size):
     return image_array, label_array
 
 
+def create_training_lists(data_images_path, data_annotation_path, excluded_classes, resized_image_size):
+    '''
+    Get the path of the images and the corresponding xml files. Also filters the data with unwanted classes.
+    '''
+    image_paths = sorted([x for x in glob.glob(data_images_path + '/**')])
+    list_annotations = sorted([x for x in glob.glob(data_annotation_path + '/**')])
+
+    all_classes = get_classes(xml_files=list_annotations)
+
+    new_image_paths, new_list_annotations = [], []
+    for annotation, img_path in zip(list_annotations, image_paths):
+
+        class_label, _ = get_labels_from_xml(xml_file_path=annotation, classes=all_classes, resized_image_size=resized_image_size,
+                                             excluded_classes=excluded_classes)
+
+        if len(class_label) == 0:
+            continue
+
+        new_image_paths.append(img_path)
+        new_list_annotations.append(annotation)
+
+
+
+    return new_image_paths, new_list_annotations, all_classes
+
 
 
 def get_classes(xml_files):
@@ -266,7 +291,7 @@ def generate_anchors(anchor_sizes, subsampled_ratio, resized_image_size):
     #each grid has len(anchor_sizes) anchors and each anchor has 5 elements.
     #the first element denotes the x-grid and the second element denotes the y-grid.
     #the third element denotes the i-th anchor and the last element denotes the elements of the i-th anchor.
-    anchors_list  = np.zeros((subsampled_image_size, subsampled_image_size, len(anchor_sizes), 5), dtype=np.float32)
+    anchors_list = np.zeros((subsampled_image_size, subsampled_image_size, len(anchor_sizes), 5), dtype=np.float32)
 
     anchor_center = [0, 0]
 
@@ -305,12 +330,11 @@ def generate_training_data(anchors_list, xml_file_path, classes, resized_image_s
     object_labels, gt_boxes = get_labels_from_xml(xml_file_path=xml_file_path, resized_image_size=resized_image_size,
                                                   classes=classes, excluded_classes=excluded_classes)
 
-
     image_array = read_image(image_path=image_path, resized_image_size=resized_image_size)
 
     #label formatting
     label_array = label_formatting(gt_class_labels=object_labels, gt_boxes=gt_boxes, anchors_list=anchors_list,
-                                   subsampled_ratio=subsampled_ratio, resized_image_size=resized_image_size, classes=classes)
+                                   subsampled_ratio=subsampled_ratio, resized_image_size=resized_image_size)
 
 
 

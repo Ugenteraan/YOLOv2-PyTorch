@@ -61,7 +61,7 @@ def get_highest_iou_anchor(anchors, gt_box):
 
 
 
-def label_formatting(gt_class_labels, gt_boxes, anchors_list, subsampled_ratio, resized_image_size, classes):
+def label_formatting(gt_class_labels, gt_boxes, anchors_list, subsampled_ratio, resized_image_size):
     '''
     Formats the given labels from the xml file into YOLO's format as explained above.
     '''

@@ -92,7 +92,7 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
 
     if epoch_idx % 10 == 0:
         #there are 10 options for image sizes.
-        chosen_image_index = randint(0, 9)
+        chosen_image_index = 0
 
     #resets the learning rate after every 200 epochs.
     if epoch_idx % 200 == 0 and epoch_idx != 0:
@@ -107,13 +107,11 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
 
     training_data = LoadDataset(resized_image_size=chosen_image_size, transform=ToTensor())
 
-    dataloader = DataLoader(training_data, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=4)
+    dataloader = DataLoader(training_data, batch_size=5, shuffle=True, num_workers=4)
 
     postProcess_obj = PostProcess(box_num_per_grid=cfg.K, feature_size=feature_size, anchors_list=training_data.anchors_list)
 
     for i, sample in tqdm(enumerate(dataloader)):
-        # print(sample["image"].shape)
-        # print(sample["label"].shape)
 
         batch_x, batch_y = sample["image"].cuda(), sample["label"].cuda()
 
@@ -150,6 +148,7 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
     if epoch_idx % 10 == 0:
 
         avg_prec = postProcess_obj.calculate_ap()
+        print(avg_prec)
         mean_ap = calculate_map(avg_prec)
         postProcess_obj.clear_lists() #clears the list after every mAP calculation.
         print("Mean AP : ", mean_ap)
