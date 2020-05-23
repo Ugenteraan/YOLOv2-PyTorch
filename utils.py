@@ -39,7 +39,7 @@ def imgnet_process_classname(classname):
     Process the given string.
     '''
 
-    processed_str = classname.replace("'","")
+    processed_str = classname.replace("'", "")
     processed_str = processed_str.replace(" ", "_")
     processed_str = processed_str.lower()
 
@@ -216,7 +216,7 @@ def get_labels_from_xml(xml_file_path, classes, resized_image_size, excluded_cla
             class_label.append(index)
             bbox_label.append(np.asarray(generated_box_info, dtype='float32'))
 
-    except TypeError : #happens when the iteration through the tag fails due to only 1 object being in the image.
+    except TypeError: #happens when the iteration through the tag fails due to only 1 object being in the image.
 
         #SAME PROCEDURE AS ABOVE !
 

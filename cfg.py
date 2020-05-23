@@ -52,7 +52,7 @@ LIST_IMAGES, LIST_ANNOTATIONS, ALL_CLASSES = create_training_lists(data_images_p
                                                       excluded_classes=EXCLUDED_CLASSES, resized_image_size=IMAGE_SIZES[0])
 
 #get the classes for all the training data.
-CLASSES = [x for x in ALL_CLASSES if not x in EXCLUDED_CLASSES]
+CLASSES = sorted([x for x in ALL_CLASSES if not x in EXCLUDED_CLASSES])
 
 
 TOTAL_IMAGES = len(LIST_IMAGES)

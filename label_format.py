@@ -169,7 +169,7 @@ def calculate_ground_truth(subsampled_ratio, anchors_list, network_prediction, p
             center_x = (predicted_arrays[gridX][gridY][anchor_index][1]*subsampled_ratio) + (gridX*subsampled_ratio)
             center_y = (predicted_arrays[gridX][gridY][anchor_index][2]*subsampled_ratio) + (gridY*subsampled_ratio)
 
-            width  = (anchors_list[gridX][gridY][anchor_index][3])*(math.e**(predicted_arrays[gridX][gridY][anchor_index][3]))
+            width = (anchors_list[gridX][gridY][anchor_index][3])*(math.e**(predicted_arrays[gridX][gridY][anchor_index][3]))
             height = (anchors_list[gridX][gridY][anchor_index][4])*(math.e**(predicted_arrays[gridX][gridY][anchor_index][4]))
 
             x1 = center_x - width/2
@@ -184,7 +184,7 @@ def calculate_ground_truth(subsampled_ratio, anchors_list, network_prediction, p
             else:
                 class_index = np.argmax(predicted_arrays[gridX][gridY][anchor_index][5:])
 
-            transformed_values.append([pred_confidence,x1,y1,x2,y2, class_index])
+            transformed_values.append([pred_confidence, x1, y1, x2, y2, class_index])
 
             #get the responsible anchor and transform the values.
             res_anchor = anchors_list[gridX][gridY][anchor_index]
