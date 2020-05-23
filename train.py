@@ -93,7 +93,7 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
 
     if epoch_idx % 10 == 0:
         #there are 10 options for image sizes.
-        chosen_image_index = 0
+        chosen_image_index = randint(0, 9)
 
     #resets the learning rate after every 200 epochs.
     if epoch_idx % 200 == 0 and epoch_idx != 0:
