@@ -84,6 +84,7 @@ HIGHEST_MAP = 0
 
 TRAINING_LOSSES_LIST = []
 TRAINING_MAPS_LIST = []
+TRAINING_AP_LIST = []
 
 for epoch_idx in range(cfg.TOTAL_EPOCH):
 
@@ -107,7 +108,7 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
 
     training_data = LoadDataset(resized_image_size=chosen_image_size, transform=ToTensor())
 
-    dataloader = DataLoader(training_data, batch_size=5, shuffle=True, num_workers=4)
+    dataloader = DataLoader(training_data, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=4)
 
     postProcess_obj = PostProcess(box_num_per_grid=cfg.K, feature_size=feature_size, anchors_list=training_data.anchors_list)
 
@@ -152,16 +153,22 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
         mean_ap = calculate_map(avg_prec)
         postProcess_obj.clear_lists() #clears the list after every mAP calculation.
         print("Mean AP : ", mean_ap)
+        TRAINING_AP_LIST.append(avg_prec)
         TRAINING_MAPS_LIST.append(mean_ap)
         if mean_ap > HIGHEST_MAP: #save the model with the highest mAP.
             HIGHEST_MAP = mean_ap
             torch.save(YOLO.state_dict(), cfg.TRAINED_MODEL_PATH_FOLDER+cfg.TRAINED_MODEL_NAME)
 
 
-AP_FILE = open("map.txt", 'w+')
-AP_FILE.write(str(TRAINING_MAPS_LIST))
-AP_FILE.close()
+        AP_FILE = open("ap.txt", 'a')
+        AP_FILE.write(str(TRAINING_AP_LIST))
+        AP_FILE.close()
 
-LOSS_FILE = open("loss.txt", "w+")
-LOSS_FILE.write(str(TRAINING_LOSSES_LIST))
-LOSS_FILE.close()
+
+        MAP_FILE = open("map.txt", 'a')
+        MAP_FILE.write(str(TRAINING_MAPS_LIST))
+        MAP_FILE.close()
+
+    LOSS_FILE = open("loss.txt", "a")
+    LOSS_FILE.write(str(TRAINING_LOSSES_LIST))
+    LOSS_FILE.close()
