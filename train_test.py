@@ -2,7 +2,7 @@
 Was used to test YOLO's correctness.
 '''
 
-'''
+
 from load_data import LoadDataset, ToTensor
 import cfg
 import torch
@@ -49,7 +49,13 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
     for i, sample in tqdm(enumerate(dataloader)):
         # print(sample["image"].shape)
         # print(sample["label"].shape)
-        if i == 4:
+        lear_rate = None
+        for g in OPTIMIZER.param_groups:
+            lear_rate = g['lr']
+
+        print("Epoch %d, LR : %g"%(epoch_idx, lear_rate))
+
+        if i == 1:
             pass
         else:
             continue
@@ -125,4 +131,3 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
 
     training_losses_list.append(training_loss)
     # training_mAPs_list.append(meanAP)
-'''
