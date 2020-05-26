@@ -33,9 +33,9 @@ class LoadDataset(Dataset):
     Wraps the loading of the dataset in PyTorch's DataLoader module.
     '''
 
-    def __init__(self, resized_image_size, k=cfg.K, classes=cfg.CLASSES.copy(), list_images=cfg.LIST_IMAGES, list_annotations=cfg.LIST_ANNOTATIONS,
+    def __init__(self, resized_image_size, k=cfg.K, classes=cfg.CLASSES.copy(), list_images=cfg.LIST_IMAGES.copy(), list_annotations=cfg.LIST_ANNOTATIONS.copy(),
                  total_images=cfg.TOTAL_IMAGES, subsampled_ratio=cfg.SUBSAMPLED_RATIO, detection_conv_size=cfg.DETECTION_CONV_SIZE,
-                 excluded_classes=cfg.EXCLUDED_CLASSES.copy(), transform=None):
+                 excluded_classes=cfg.EXCLUDED_CLASSES.copy(), anchor_box_write=cfg.ANCHOR_BOXES_STORE, transform=None):
 
         '''
         Initialize parameters and anchors using KMeans.
@@ -51,10 +51,18 @@ class LoadDataset(Dataset):
         self.detection_conv_size = detection_conv_size
         self.excluded_classes = excluded_classes
         self.transform = transform
+        self.anchor_boxes_write = anchor_box_write
 
         #get the top-k anchor sizes using modifed K-Means clustering.
         self.anchor_sizes = cluster_bounding_boxes(k=self.k, total_images=self.total_images, resized_image_size=self.resized_image_size,
                                                    list_annotations=cfg.LIST_ANNOTATIONS, classes=cfg.CLASSES, excluded_classes=cfg.EXCLUDED_CLASSES)
+        #for every image size, different anchor set.
+        anchor_data = {
+            self.resized_image_size : self.anchor_sizes
+        }
+        anchor_file = open(self.anchor_boxes_write)
+        anchor_file.write(str(anchor_data))
+        anchor_file.close()
 
         self.anchors_list = generate_anchors(anchor_sizes=self.anchor_sizes,
                                              subsampled_ratio=self.subsampled_ratio, resized_image_size=self.resized_image_size)

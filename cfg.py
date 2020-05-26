@@ -27,6 +27,9 @@ DATA_IMAGES_PATH = '../VOCdevkit/VOC2012/JPEGImages'
 DATA_ANNOTATION_PATH = '../VOCdevkit/VOC2012/Annotations'
 TRAINED_MODEL_PATH_FOLDER = './yolo_model/'
 TRAINED_MODEL_NAME = 'yolo.pth'
+TEST_FOLDER_PATH = './test_images/'
+OUTPUT_FOLDER_PATH = './output/'
+ANCHOR_BOXES_STORE = './anchor_sizes.txt'
 IMAGE_SIZES = [320, 352, 384, 416, 448, 480, 512, 544, 576, 608]
 IMAGE_DEPTH = 3
 DETECTION_CONV_SIZE = 3
@@ -58,9 +61,15 @@ CLASSES = sorted([x for x in ALL_CLASSES if not x in EXCLUDED_CLASSES])
 TOTAL_IMAGES = len(LIST_IMAGES)
 NUM_OF_CLASS = len(CLASSES)
 
-#create the model saving directories if they don't exist.
+#create the directories if they don't exist.
 if not os.path.exists(IMGNET_MODEL_SAVE_PATH_FOLDER):
     os.makedirs(IMGNET_MODEL_SAVE_PATH_FOLDER)
 
 if not os.path.exists(TRAINED_MODEL_PATH_FOLDER):
     os.makedirs(TRAINED_MODEL_PATH_FOLDER)
+
+if not os.path.exists(OUTPUT_FOLDER_PATH):
+    os.makedirs(OUTPUT_FOLDER_PATH)
+
+if not os.path.exists(TEST_FOLDER_PATH):
+    os.makedirs(TEST_FOLDER_PATH)

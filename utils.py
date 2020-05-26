@@ -93,6 +93,17 @@ def imgnet_read_data(image_path, class_idx, resized_image_size):
     return image_array, label_array
 
 
+def create_test_lists(data_images_path):
+    '''
+    Returns a list containing the path of the image files.
+    '''
+
+    image_paths = sorted([x for x in glob.glob(data_images_path + '**')])
+
+    return image_paths
+
+
+
 def create_training_lists(data_images_path, data_annotation_path, excluded_classes, resized_image_size):
     '''
     Get the path of the images and the corresponding xml files. Also filters the data with unwanted classes.
