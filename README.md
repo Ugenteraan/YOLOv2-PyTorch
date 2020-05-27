@@ -1,6 +1,6 @@
 # YOLO V2 - Pytorch 1.4
 
-This project can be used to train and evaluate the YOLO v2 model (Tested with Pascal VOC 2012 dataset). Due to the lack of resources, only aeroplanes and dogs images were used to train and evaluate the model. Below are some of the result of evaluation. 
+This project can be used to train and evaluate the YOLO v2 model (Tested with Pascal VOC 2012 dataset). Due to the lack of resources, only aeroplanes and dogs images were used to train and evaluate the model. Below are some of the result of evaluation. Some short notes on the flow of the program is available [here](https://github.com/Ugenteraan/YOLOv2-PyTorch/blob/master/YOLO%20Notes.ipynb) as well.
 
 ### Prediction on test images.
 <img src="output/1.jpg" width="170"/>  <img src="output/2.jpg" width="170"/>  <img src="output/3.jpg" width="170"/>  <img src="output/4.jpg" width="170"/>  <img src="output/0.jpg" width="170"/>
