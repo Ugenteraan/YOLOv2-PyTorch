@@ -1,7 +1,6 @@
 **/__pycache__/**
 **/.vscode/**
 **/.ipynb_checkpoints/**
-output/**
 imagenet_model/**
 yolo_model/**
 test_images/**
