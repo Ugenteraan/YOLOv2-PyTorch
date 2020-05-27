@@ -140,7 +140,7 @@ def calculate_ground_truth(subsampled_ratio, anchors_list, network_prediction, p
     predicted_data_num = network_prediction.shape[0] #number of data in the batch.
 
     #set the array values for the predicted objectness probability lower than the threshold to 0.
-    boolean_array = network_prediction[:,:,:,:,0] < prob_threshold
+    boolean_array = network_prediction[:, :, :, :, 0] < prob_threshold
     network_prediction[boolean_array] = 0
 
     entire_batch_transformed_values = []
@@ -159,18 +159,18 @@ def calculate_ground_truth(subsampled_ratio, anchors_list, network_prediction, p
 
         for j in range(num_of_occupied_arrays): #loop through every occupied anchors in a particular batch index.
 
-            gridX = occupied_array_indexes[0][j] #responsible X-grid.
-            gridY = occupied_array_indexes[1][j] #responsible Y-grid.
+            grid_x = occupied_array_indexes[0][j] #responsible X-grid.
+            grid_y = occupied_array_indexes[1][j] #responsible Y-grid.
             anchor_index = occupied_array_indexes[2][j] #responsible anchor index.
 
             #get the prediction confidence.
-            pred_confidence = predicted_arrays[gridX][gridY][anchor_index][0]
+            pred_confidence = predicted_arrays[grid_x][grid_y][anchor_index][0]
             #center coordinates of the predicted box.
-            center_x = (predicted_arrays[gridX][gridY][anchor_index][1]*subsampled_ratio) + (gridX*subsampled_ratio)
-            center_y = (predicted_arrays[gridX][gridY][anchor_index][2]*subsampled_ratio) + (gridY*subsampled_ratio)
+            center_x = (predicted_arrays[grid_x][grid_y][anchor_index][1]*subsampled_ratio) + (grid_x*subsampled_ratio)
+            center_y = (predicted_arrays[grid_x][grid_y][anchor_index][2]*subsampled_ratio) + (grid_y*subsampled_ratio)
 
-            width = (anchors_list[gridX][gridY][anchor_index][3])*(math.e**(predicted_arrays[gridX][gridY][anchor_index][3]))
-            height = (anchors_list[gridX][gridY][anchor_index][4])*(math.e**(predicted_arrays[gridX][gridY][anchor_index][4]))
+            width = (anchors_list[grid_x][grid_y][anchor_index][3])*(math.e**(predicted_arrays[grid_x][grid_y][anchor_index][3]))
+            height = (anchors_list[grid_x][grid_y][anchor_index][4])*(math.e**(predicted_arrays[grid_x][grid_y][anchor_index][4]))
 
             x1 = center_x - width/2
             y1 = center_y - height/2
@@ -179,15 +179,15 @@ def calculate_ground_truth(subsampled_ratio, anchors_list, network_prediction, p
 
             if ground_truth_mode:
 
-                class_index = predicted_arrays[gridX][gridY][anchor_index][5]
+                class_index = predicted_arrays[grid_x][grid_y][anchor_index][5]
 
             else:
-                class_index = np.argmax(predicted_arrays[gridX][gridY][anchor_index][5:])
+                class_index = np.argmax(predicted_arrays[grid_x][grid_y][anchor_index][5:])
 
             transformed_values.append([pred_confidence, x1, y1, x2, y2, class_index])
 
             #get the responsible anchor and transform the values.
-            res_anchor = anchors_list[gridX][gridY][anchor_index]
+            res_anchor = anchors_list[grid_x][grid_y][anchor_index]
             anchor_x1 = res_anchor[1] - res_anchor[3]/2
             anchor_y1 = res_anchor[2] - res_anchor[4]/2
             anchor_x2 = res_anchor[1] + res_anchor[3]/2

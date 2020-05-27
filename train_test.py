@@ -2,7 +2,7 @@
 Was used to test YOLO's correctness.
 '''
 
-
+'''
 from load_data import LoadDataset, ToTensor
 import cfg
 import torch
@@ -139,3 +139,4 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
 
     training_losses_list.append(training_loss)
     # training_mAPs_list.append(meanAP)
+'''

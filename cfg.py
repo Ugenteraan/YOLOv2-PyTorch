@@ -1,10 +1,9 @@
 '''
 Configuration file.
 '''
-import glob
 import os
 import torch
-from utils import get_classes, imgnet_get_classes, imgnet_check_model, create_training_lists, create_test_lists
+from utils import imgnet_get_classes, imgnet_check_model, create_training_lists, create_test_lists
 
 
 ###IMAGENET config
