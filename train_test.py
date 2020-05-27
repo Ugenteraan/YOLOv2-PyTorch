@@ -19,14 +19,22 @@ import itertools
 import os
 from utils import calculate_map
 
-print(YOLO)
+
 chosen_image_index = 0
 highest_map = 0
 
 training_losses_list = []
 training_mAPs_list = []
 
+if os.path.exists(cfg.TRAINED_MODEL_PATH_FOLDER+cfg.TRAINED_MODEL_NAME):
 
+    YOLO_PARAMS = torch.load(cfg.TRAINED_MODEL_PATH_FOLDER+cfg.TRAINED_MODEL_NAME)
+    YOLO.load_state_dict(YOLO_PARAMS)
+    print("YOLO loaded!")
+
+
+YOLO = YOLO.eval()
+print(YOLO)
 
 training_data = LoadDataset(resized_image_size=320, transform=ToTensor())
 

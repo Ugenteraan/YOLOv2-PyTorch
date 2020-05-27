@@ -4,7 +4,7 @@ Configuration file.
 import glob
 import os
 import torch
-from utils import get_classes, imgnet_get_classes, imgnet_check_model, create_training_lists
+from utils import get_classes, imgnet_get_classes, imgnet_check_model, create_training_lists, create_test_lists
 
 
 ###IMAGENET config
@@ -29,8 +29,10 @@ TRAINED_MODEL_PATH_FOLDER = './yolo_model/'
 TRAINED_MODEL_NAME = 'yolo.pth'
 TEST_FOLDER_PATH = './test_images/'
 OUTPUT_FOLDER_PATH = './output/'
-ANCHOR_BOXES_STORE = './anchor_sizes.txt'
+ANCHOR_BOXES_STORE = 'anchor_sizes.txt'
+YOLO_DB = 'yolo_db'
 IMAGE_SIZES = [320, 352, 384, 416, 448, 480, 512, 544, 576, 608]
+TEST_IMAGE_SIZE = 448
 IMAGE_DEPTH = 3
 DETECTION_CONV_SIZE = 3
 SUBSAMPLED_RATIO = 32
@@ -44,7 +46,7 @@ MAP_IOU_THRESH = 0.5
 CONFIDENCE_THRESH = 0.8
 BATCH_SIZE = 5
 NMS_IOU_THRESH = 0.75
-EXCLUDED_CLASSES = ['horse', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'chair', 'cow', 'diningtable', 'person',
+EXCLUDED_CLASSES = ['horse', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'chair', 'cow', 'diningtable', 'person','cat',
                     'motorbike', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
 
 
@@ -52,7 +54,9 @@ EXCLUDED_CLASSES = ['horse', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 
 #Get the image and annotation file paths
 #resized image size does not affect anything since we're just using it to filter the unwanted classes.
 LIST_IMAGES, LIST_ANNOTATIONS, ALL_CLASSES = create_training_lists(data_images_path=DATA_IMAGES_PATH, data_annotation_path=DATA_ANNOTATION_PATH,
-                                                      excluded_classes=EXCLUDED_CLASSES, resized_image_size=IMAGE_SIZES[0])
+                                                                   excluded_classes=EXCLUDED_CLASSES, resized_image_size=IMAGE_SIZES[0])
+
+TEST_IMAGE_LIST = create_test_lists(TEST_FOLDER_PATH)
 
 #get the classes for all the training data.
 CLASSES = sorted([x for x in ALL_CLASSES if not x in EXCLUDED_CLASSES])
@@ -73,3 +77,6 @@ if not os.path.exists(OUTPUT_FOLDER_PATH):
 
 if not os.path.exists(TEST_FOLDER_PATH):
     os.makedirs(TEST_FOLDER_PATH)
+
+if not os.path.exists(ANCHOR_BOXES_STORE):
+    os.mknod(ANCHOR_BOXES_STORE)

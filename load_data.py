@@ -1,10 +1,12 @@
 '''
 Loads the required dataset for both ImageNet model training and YOLOv2 model training.
 '''
+import dbm
+import numpy as np
 import torch
 from torch.utils.data import Dataset
 import cfg
-from utils import cluster_bounding_boxes, generate_anchors, generate_training_data, imgnet_generate_data, imgnet_read_data
+from utils import cluster_bounding_boxes, generate_anchors, generate_training_data, imgnet_generate_data, imgnet_read_data, generate_test_data
 
 
 
@@ -12,19 +14,27 @@ class ToTensor:
     '''
     Transforms the images and labels from numpy array to tensors.
     '''
-    def __init__(self):
-        pass
+    def __init__(self, mode='train'):
+        self.mode = mode
 
     def __call__(self, sample):
 
-        image = sample['image']
-        label = sample['label']
+        if self.mode == 'train':
+            image = sample['image']
+            label = sample['label']
 
-        image = image.transpose((2, 0, 1)) #pytorch requires the channel to be in the 1st dimension of the tensor,
+            image = image.transpose((2, 0, 1)) #pytorch requires the channel to be in the 1st dimension of the tensor,
 
 
-        return {'image':torch.from_numpy(image.astype('float32')),
-                'label': torch.from_numpy(label)}
+            return {'image':torch.from_numpy(image.astype('float32')),
+                    'label': torch.from_numpy(label)}
+        else:
+
+            image = sample['image']
+
+            image = image.transpose((2, 0, 1))
+
+            return {'image': torch.from_numpy(image.astype('float32'))}
 
 
 
@@ -56,13 +66,13 @@ class LoadDataset(Dataset):
         #get the top-k anchor sizes using modifed K-Means clustering.
         self.anchor_sizes = cluster_bounding_boxes(k=self.k, total_images=self.total_images, resized_image_size=self.resized_image_size,
                                                    list_annotations=cfg.LIST_ANNOTATIONS, classes=cfg.CLASSES, excluded_classes=cfg.EXCLUDED_CLASSES)
-        #for every image size, different anchor set.
-        anchor_data = {
-            self.resized_image_size : self.anchor_sizes
-        }
-        anchor_file = open(self.anchor_boxes_write)
-        anchor_file.write(str(anchor_data))
-        anchor_file.close()
+
+        #python dbm to store the anchor sizes for a specific training set for every image size.
+        #the anchor sizes are necessary for the use of evaluation later as we would not have training data to perform clustering.
+        yolo_db = dbm.open(cfg.YOLO_DB, 'c')
+        #for every image size, different anchor set. Each set will be stored in database for the use of evaluation later.
+        yolo_db[str(resized_image_size)] = str(self.anchor_sizes.tolist())
+        yolo_db.close()
 
         self.anchors_list = generate_anchors(anchor_sizes=self.anchor_sizes,
                                              subsampled_ratio=self.subsampled_ratio, resized_image_size=self.resized_image_size)
@@ -96,6 +106,61 @@ class LoadDataset(Dataset):
             sample = self.transform(sample)
 
         return sample
+
+
+
+class LoadTestData(Dataset):
+    '''
+    Loads the evaluation images.
+    '''
+    def __init__(self, resized_image_size, test_images_list=cfg.TEST_IMAGE_LIST.copy(), anchor_box_file=cfg.ANCHOR_BOXES_STORE,
+                 subsampled_ratio=cfg.SUBSAMPLED_RATIO, transform=None):
+
+        self.anchor_box_file = anchor_box_file
+        self.subsampled_ratio = subsampled_ratio
+        self.resized_image_size = resized_image_size
+        self.test_images_list = test_images_list
+        self.transform = transform
+
+        anchor_file = open(self.anchor_box_file, 'r')
+        anchor_tuples = anchor_file.read().replace('\n', '')
+
+        assert(len(anchor_tuples) > 0, "Anchor data is empty!")
+
+        self.all_anchor_sizes = dict(eval(anchor_tuples))
+        self.anchor_sizes = np.asarray(eval(self.all_anchor_sizes[str(self.resized_image_size)]), dtype=np.float32)
+
+        self.anchors_list = generate_anchors(anchor_sizes=self.anchor_sizes,
+                                             subsampled_ratio=self.subsampled_ratio, resized_image_size=self.resized_image_size)
+
+
+    def __len__(self):
+        '''
+        Abstract method. Returns the total number of data.
+        '''
+
+        return len(self.test_images_list)
+
+
+    def __getitem__(self, idx):
+        '''
+        Abstract method. Returns the image and label for a single input with the index of `idx`.
+        '''
+
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+
+        image = generate_test_data(resized_image_size=self.resized_image_size,
+                                                image_path=self.test_images_list[idx])
+
+        sample = {'image':image}
+
+        if self.transform:
+            sample = self.transform(sample)
+
+        return sample
+
 
 
 class ImgnetLoadDataset(Dataset):

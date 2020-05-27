@@ -330,6 +330,14 @@ def generate_anchors(anchor_sizes, subsampled_ratio, resized_image_size):
     return anchors_list
 
 
+def generate_test_data(resized_image_size, image_path):
+    '''
+    Returns the image array the given index.
+    '''
+
+    image_array = read_image(image_path=image_path, resized_image_size=resized_image_size)
+
+    return image_array
 
 
 def generate_training_data(anchors_list, xml_file_path, classes, resized_image_size, subsampled_ratio, excluded_classes, image_path):
@@ -409,3 +417,40 @@ def calculate_map(ap_dict):
     mean_avg_precision = sum(all_ap)/total_class
 
     return mean_avg_precision
+
+
+def draw_box(image_tensor, pred_tensor, classes, output_folder, conf_thresh):
+    '''
+    Given the output from the network, draw bounding boxes on the images.
+    '''
+
+    image_tensor = image_tensor.transpose(1, 2).transpose(2, 3) #the channel axis has to be at the last index.
+    image_array = image_tensor.cpu().numpy()
+
+    batch_size = image_array.shape[0]
+
+    for i in range(batch_size):
+
+        pred_array = pred_tensor[i].cpu().numpy()
+        img_array = np.asarray(image_array[i])
+        img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
+
+        #loop through every anchor box regressions
+        for k in range(pred_array.shape[0]):
+
+            #ignore if the confidence is below threshold.
+            if pred_array[k][0] < conf_thresh:
+                continue
+            try:
+
+                cv2.putText(img_array, (str(round(pred_array[k][0], 3)) + ", " + str(classes[int(pred_array[k][5])])),
+                            (int(pred_array[k][1]), int(pred_array[k][2]-5)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (36, 115, 12), 2)
+
+                cv2.rectangle(img_array, (int(pred_array[k][1]), int(pred_array[k][2])), (int(pred_array[k][3]), int(pred_array[k][4])),
+                              (0, 255, 0), 2)
+
+            except:
+                pass
+
+        #write the images to disk.
+        cv2.imwrite(output_folder+str(i)+'.jpg', img_array*255)
