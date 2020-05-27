@@ -14,7 +14,9 @@ In order to train the model with your own custom dataset, please follow the inst
 1) Make sure your dataset's label follow the annotation format of Pascal VOC 2012.
 
 2) In `cfg.py`:
+
     a) Change **DATA_IMAGES_PATH** and **DATA_ANNOTATION_PATH** variables to the path of your own dataset.
+    
     b) If you wish to exclude certain classes from your dataset from being trained, include the name of the classes in      the list of variable **EXCLUDED_CLASSES**.
     
 3) Download the pre-trained imagenet model from [here](https://drive.google.com/file/d/1pF_BaOFQOIbHPsjrsrZ6BmXZm49IPrrn/view?usp=sharing) and place it in a folder named **_imagenet_model_** in the root directory.
