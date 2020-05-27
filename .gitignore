@@ -4,6 +4,7 @@
 output/**
 imagenet_model/**
 yolo_model/**
+test_images/**
 yolo.bak
 yolo.dat
 yolo.dir
