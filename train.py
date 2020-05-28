@@ -162,22 +162,22 @@ for epoch_idx in range(cfg.TOTAL_EPOCH):
             torch.save(YOLO.state_dict(), cfg.TRAINED_MODEL_PATH_FOLDER+cfg.TRAINED_MODEL_NAME)
 
 
-        AP_FILE = open("ap.txt", 'a')
+        AP_FILE = open("ap.txt", 'w')
         AP_FILE.write(str(TRAINING_AP_LIST))
         AP_FILE.close()
 
 
-        MAP_FILE = open("map.txt", 'a')
+        MAP_FILE = open("map.txt", 'w')
         MAP_FILE.write(str(TRAINING_MAPS_LIST))
         MAP_FILE.close()
 
-    LOSS_FILE = open("loss.txt", "a")
+    LOSS_FILE = open("loss.txt", "w")
     LOSS_FILE.write(str(TRAINING_LOSSES_LIST))
     LOSS_FILE.close()
 
-#write the anchor sizes data on the file from the database.
-YOLO_DB = dbm.open(cfg.YOLO_DB, 'c')
-ANCHOR_FILE = open(cfg.ANCHOR_BOXES_STORE, 'w')
-ANCHOR_DATA = [x for x in YOLO_DB.items()]
-ANCHOR_FILE.write(str(ANCHOR_DATA))
-ANCHOR_FILE.close()
+    #write the anchor sizes data on the file from the database.
+    YOLO_DB = dbm.open(cfg.YOLO_DB, 'c')
+    ANCHOR_FILE = open(cfg.ANCHOR_BOXES_STORE, 'w')
+    ANCHOR_DATA = [x for x in YOLO_DB.items()]
+    ANCHOR_FILE.write(str(ANCHOR_DATA))
+    ANCHOR_FILE.close()
