@@ -25,7 +25,8 @@ In order to train the model with your own custom dataset, please follow the inst
 
 The model's loss will be shown in every epoch while the mAP will be shown for every 10 epoch. The trained weights will be saved in the `yolo_model` folder. After the training is finished, the anchor data that were used throughout the training will be saved in `anchor_sizes.txt` file. 
 
-**IMPORTANT**: When reusing the trained model for evaluation, `anchor_sizes.txt` must be present as well.
+**IMPORTANT**: When reusing the trained model for evaluation, `anchor_sizes.txt` must be present as well. 
+
 
 
 License
