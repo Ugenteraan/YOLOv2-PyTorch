@@ -45,4 +45,4 @@ for i, sample in tqdm(enumerate(DATALOADER)):
     nms_output = POST_PROCESSING.nms(predictions=outputs.detach().clone().contiguous())
 
     draw_box(image_tensor=batch_x.detach().clone(), pred_tensor=nms_output.detach().clone(),
-             classes=cfg.CLASSES.copy(), output_folder=cfg.OUTPUT_FOLDER_PATH, conf_thresh=cfg.CONFIDENCE_THRESH)
+             classes=cfg.CLASSES.copy(), output_folder=cfg.OUTPUT_FOLDER_PATH, conf_thresh=cfg.CONFIDENCE_THRESH, start=i*cfg.BATCH_SIZE)

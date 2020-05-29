@@ -419,7 +419,7 @@ def calculate_map(ap_dict):
     return mean_avg_precision
 
 
-def draw_box(image_tensor, pred_tensor, classes, output_folder, conf_thresh):
+def draw_box(image_tensor, pred_tensor, classes, output_folder, conf_thresh, start):
     '''
     Given the output from the network, draw bounding boxes on the images.
     '''
@@ -453,4 +453,4 @@ def draw_box(image_tensor, pred_tensor, classes, output_folder, conf_thresh):
                 pass
 
         #write the images to disk.
-        cv2.imwrite(output_folder+str(i)+'.jpg', img_array*255)
+        cv2.imwrite(output_folder+str(start+i)+'.jpg', img_array*255)
